@@ -1,8 +1,8 @@
 site_name: Recommender systems
 site_description: Beginner friendly notes and experiments for recommender systems.
-site_url: https://bizi.github.io/Recommender-Systems/
-repo_url: https://github.com/bizi/Recommender-Systems
-repo_name: bizi/Recommender-Systems
+site_url: https://billzi2016.github.io/Recommender-Systems/
+repo_url: https://github.com/billzi2016/Recommender-Systems
+repo_name: billzi2016/Recommender-Systems
 docs_dir: docs
 site_dir: site
 
