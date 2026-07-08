@@ -1,0 +1,96 @@
+site_name: Recommender systems
+site_description: Beginner friendly notes and experiments for recommender systems.
+site_url: https://bizi.github.io/Recommender-Systems/
+repo_url: https://github.com/bizi/Recommender-Systems
+repo_name: bizi/Recommender-Systems
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - search.suggest
+    - search.highlight
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: en
+          name: English
+          default: true
+          build: true
+        - locale: zh
+          name: 中文
+          build: true
+          site_name: 推荐系统学习笔记
+          nav_translations:
+            Home: 首页
+            Getting started: 入门
+            Datasets: 数据集
+            MovieLens: MovieLens
+            Algorithms: 算法
+            Traditional statistics: 传统统计
+            Retrieval: 召回
+            Feature crossing: 特征交叉
+            Deep ranking: 深度精排
+            Sequential recommendation: 序列推荐
+            Graph recommendation: 图推荐
+            Project: 项目
+            Documentation setup: 文档工程
+            Specs: 规格说明
+            MkDocs PRD: MkDocs PRD
+            GitHub Actions PRD: GitHub Actions PRD
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Datasets:
+      - MovieLens: datasets/movie_lens/index.md
+  - Algorithms:
+      - Traditional statistics:
+          - Overview: algorithms/traditional-statistics/index.md
+          - Item-CF: algorithms/traditional-statistics/item-cf/index.md
+          - User-CF: algorithms/traditional-statistics/user-cf/index.md
+          - Matrix factorization: algorithms/traditional-statistics/matrix-factorization/index.md
+      - Retrieval:
+          - Overview: algorithms/retrieval/index.md
+          - Two tower TFRS: algorithms/retrieval/two-tower-tfrs/index.md
+      - Feature crossing:
+          - Overview: algorithms/feature-crossing/index.md
+          - FM: algorithms/feature-crossing/fm/index.md
+          - DeepFM: algorithms/feature-crossing/deepfm/index.md
+          - xDeepFM: algorithms/feature-crossing/xdeepfm/index.md
+      - Deep ranking:
+          - Overview: algorithms/deep-ranking/index.md
+          - NCF: algorithms/deep-ranking/ncf/index.md
+          - Wide and deep: algorithms/deep-ranking/wide-and-deep/index.md
+          - DCN: algorithms/deep-ranking/dcn/index.md
+      - Sequential recommendation:
+          - Overview: algorithms/sequential-recommendation/index.md
+          - GRU4Rec: algorithms/sequential-recommendation/gru4rec/index.md
+          - SASRec: algorithms/sequential-recommendation/sasrec/index.md
+      - Graph recommendation:
+          - Overview: algorithms/graph-recommendation/index.md
+          - LightGCN: algorithms/graph-recommendation/lightgcn/index.md
+          - NGCF: algorithms/graph-recommendation/ngcf/index.md
+  - Project:
+      - Documentation setup: project/documentation.md
+      - Specs:
+          - MkDocs PRD: project/mkdocs-prd.md
+          - GitHub Actions PRD: project/github-actions-prd.md
