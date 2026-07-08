@@ -41,6 +41,7 @@ def parse_args() -> argparse.Namespace:
     checkpoint_group.add_argument("--no-save-checkpoints", dest="save_checkpoints", action="store_false", help="Do not write any .pt checkpoint files.")
     parser.add_argument("--checkpoint-every", type=int, default=20, help="Save one intermediate checkpoint every N epochs when checkpoint saving is enabled. Use 0 to keep only best.pt.")
     parser.add_argument("--keep-checkpoints", type=int, default=3, help="Keep at most this many intermediate checkpoints.")
+    parser.add_argument("--force-train", action="store_true", help="Ignore checkpoints/best.pt and train again.")
     return parser.parse_args()
 
 
@@ -81,6 +82,7 @@ def main() -> None:
         checkpoint_dir=checkpoint_dir,
         checkpoint_every=args.checkpoint_every,
         keep_checkpoints=args.keep_checkpoints,
+        force_train=args.force_train,
     )
 
     # 选择训练集中评分数量较多的一部电影，避免样例电影太冷门导致近邻难看。

@@ -72,11 +72,19 @@ The negative is not guaranteed to be a true dislike. It is an unrated sampled it
 
 ## Run
 
-Runnable PyTorch LightGCN code will follow:
+Default full-dataset run:
 
 ```bash
-./06-graph-recommendation/lightgcn/run.sh --sample-ratings 2000000
+./06-graph-recommendation/lightgcn/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
+
+Non-main path: for a faster trial run:
+
+```bash
+./06-graph-recommendation/lightgcn/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+The default command saves only `checkpoints/best.pt`. The report records validation metrics, test metrics, recommendation examples, and checkpoint size.
 
 ## Common mistakes
 

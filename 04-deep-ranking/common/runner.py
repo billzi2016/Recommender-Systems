@@ -51,6 +51,7 @@ def parse_args(description: str) -> argparse.Namespace:
     checkpoint_group.add_argument("--no-save-checkpoints", dest="save_checkpoints", action="store_false", help="Do not write any .pt checkpoint files.")
     parser.add_argument("--checkpoint-every", type=int, default=20, help="Save one intermediate checkpoint every N epochs. Use 0 to keep only best.pt.")
     parser.add_argument("--keep-checkpoints", type=int, default=3, help="Keep at most this many intermediate checkpoints.")
+    parser.add_argument("--force-train", action="store_true", help="Ignore checkpoints/best.pt and train again.")
     return parser.parse_args()
 
 
@@ -61,7 +62,12 @@ def _score_examples(kind: str, model, test: pd.DataFrame, movies: pd.DataFrame, 
     指标告诉你模型整体表现，样例告诉你模型有没有明显跑偏。
     """
 
-    sample = test.head(eval_rows).copy()
+    # 测试集里可能出现训练阶段没见过的用户或电影。
+    # build_*_dataset 会过滤这些冷启动行；如果这里还保留原始 sample，
+    # 后面把 scores 写回 DataFrame 时就会出现“分数数量少于行数”的长度错误。
+    sample = test[test["userId"].isin(spec.user_to_index) & test["movieId"].isin(spec.movie_to_index)].head(eval_rows).copy()
+    if sample.empty:
+        return "No scorable held-out rows were produced.", "本次没有可评分的测试集样例。"
     dataset = build_pair_dataset(sample, spec) if kind == "ncf" else build_context_dataset(sample, spec)
     device = next(model.parameters()).device
     model.eval()
@@ -137,6 +143,7 @@ def run_deep_ranking_experiment(kind: str, algorithm_dir: Path) -> None:
         checkpoint_dir=checkpoint_dir,
         checkpoint_every=args.checkpoint_every,
         keep_checkpoints=args.keep_checkpoints,
+        force_train=args.force_train,
     )
 
     examples, examples_zh = _score_examples(kind, result.model, test, data.movies, spec, args.eval_rows)

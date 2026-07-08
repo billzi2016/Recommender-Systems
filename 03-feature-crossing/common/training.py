@@ -88,6 +88,7 @@ def train_feature_crossing_model(
     checkpoint_dir: Path | None,
     checkpoint_every: int,
     keep_checkpoints: int,
+    force_train: bool = False,
 ) -> TrainingResult:
     """训练 FM 系列模型。
 
@@ -98,6 +99,7 @@ def train_feature_crossing_model(
     seed_everything(42)
     device = get_device()
     model = model.to(device)
+    best_path = checkpoint_dir / "best.pt" if checkpoint_dir is not None else None
     # 训练集用多 worker 准备 batch；pin_memory 只会在 CUDA 上开启。
     # MPS/CPU 不强行 pin，避免增加内存压力。
     train_loader = DataLoader(
@@ -110,6 +112,16 @@ def train_feature_crossing_model(
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
     criterion = nn.BCEWithLogitsLoss()
+
+    if best_path is not None and best_path.exists() and not force_train:
+        # 03 组 checkpoint 的 best.pt 只在训练收尾写入。
+        # 因此存在 best.pt 时可以认为该模型已完整训练过，直接加载进入评估/report。
+        print(f"[feature-crossing] 检测到已有 best checkpoint，跳过训练并加载：{best_path}")
+        checkpoint = torch.load(best_path, map_location=device)
+        model.load_state_dict(checkpoint["model_state"])
+        valid_loss, valid_auc, _ = _evaluate(model, valid_loader, device)
+        cleanup_dataloaders(train_loader, valid_loader)
+        return TrainingResult(model=model, best_valid_loss=valid_loss, best_valid_auc=valid_auc, device_name=str(device), epochs_ran=int(checkpoint.get("epoch", 0)))
 
     best_loss = float("inf")
     best_auc = 0.0

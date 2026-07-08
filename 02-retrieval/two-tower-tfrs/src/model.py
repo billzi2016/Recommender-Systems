@@ -107,6 +107,7 @@ def train_two_tower(
     checkpoint_dir: Path | None = None,
     checkpoint_every: int = 0,
     keep_checkpoints: int = 3,
+    force_train: bool = False,
 ) -> TwoTowerResult:
     """训练双塔模型，并用验证集 loss 做 early stopping。
 
@@ -131,6 +132,16 @@ def train_two_tower(
     model = TwoTower(len(user_to_index), len(movie_to_index), embedding_dim=embedding_dim).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.01, weight_decay=1e-5)
     loss_fn = nn.CrossEntropyLoss()
+
+    best_path = checkpoint_dir / "best.pt" if checkpoint_dir is not None else None
+    if best_path is not None and best_path.exists() and not force_train:
+        # best.pt 是训练完成后的最终最好模型。检测到它时直接加载，
+        # 可以复用已有训练结果，只重新生成推荐指标和 report。
+        print(f"[TwoTower] 检测到已有 best checkpoint，跳过训练并加载：{best_path}")
+        checkpoint = torch.load(best_path, map_location=device)
+        model.load_state_dict(checkpoint["model_state"])
+        best_valid_loss = float(checkpoint.get("best_valid_loss", 0.0))
+        return TwoTowerResult(model, user_to_index, movie_to_index, index_to_user, index_to_movie, str(device), best_valid_loss)
 
     train_loader = DataLoader(
         _dataset(train_pos, user_to_index, movie_to_index),

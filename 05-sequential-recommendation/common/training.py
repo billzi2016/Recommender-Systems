@@ -93,6 +93,7 @@ def train_sequence_model(
     checkpoint_dir: Path | None,
     checkpoint_every: int,
     keep_checkpoints: int,
+    force_train: bool = False,
 ) -> SequentialTrainResult:
     """训练序列推荐模型，并用验证集 loss 做 early stopping。
 
@@ -103,6 +104,7 @@ def train_sequence_model(
     seed_everything(42)
     device = get_device()
     model = model.to(device)
+    best_path = checkpoint_dir / "best.pt" if checkpoint_dir is not None else None
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
@@ -112,6 +114,16 @@ def train_sequence_model(
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
     criterion = nn.CrossEntropyLoss()
+
+    if best_path is not None and best_path.exists() and not force_train:
+        # 05 组 best.pt 只在训练结束后保存。
+        # 如果 report 或测试阶段失败，下一次运行可以直接复用 best.pt，不必重训序列模型。
+        print(f"[sequential] 检测到已有 best checkpoint，跳过训练并加载：{best_path}")
+        checkpoint = torch.load(best_path, map_location=device)
+        model.load_state_dict(checkpoint["model_state"])
+        valid_loss, valid_recall, valid_ndcg = evaluate_sequence_model(model, valid_loader, device, top_k)
+        cleanup_dataloaders(train_loader, valid_loader)
+        return SequentialTrainResult(model, valid_loss, valid_recall, valid_ndcg, int(checkpoint.get("epoch", 0)), str(device))
 
     best_loss = float("inf")
     best_recall = 0.0

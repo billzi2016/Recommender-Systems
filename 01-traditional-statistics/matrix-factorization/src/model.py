@@ -101,6 +101,7 @@ def train_mf(
     checkpoint_dir: Path | None = None,
     checkpoint_every: int = 0,
     keep_checkpoints: int = 3,
+    force_train: bool = False,
 ) -> MFResult:
     """训练矩阵分解模型，并用验证集 early stopping。
 
@@ -125,6 +126,16 @@ def train_mf(
     model = MatrixFactorization(len(user_to_index), len(movie_to_index), n_factors, train["rating"].mean()).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-5)
     loss_fn = nn.MSELoss()
+
+    best_path = checkpoint_dir / "best.pt" if checkpoint_dir is not None else None
+    if best_path is not None and best_path.exists() and not force_train:
+        # best.pt 只在训练结束后写入一次，不是每个 epoch 反复覆盖的中间文件。
+        # 所以检测到它时，可以直接加载模型进入评估和报告生成，避免重复训练。
+        print(f"[MF] 检测到已有 best checkpoint，跳过训练并加载：{best_path}")
+        checkpoint = torch.load(best_path, map_location=device)
+        model.load_state_dict(checkpoint["model_state"])
+        metrics = evaluate_mf(model, valid_known, user_to_index, movie_to_index, device)
+        return MFResult(model, user_to_index, movie_to_index, index_to_movie, metrics, str(device))
 
     # 训练 DataLoader 使用通用性能参数：
     # CUDA 才 pin_memory，MPS/CPU 不 pin；num_workers > 0 才 persistent_workers。

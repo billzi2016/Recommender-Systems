@@ -51,6 +51,8 @@ Use `--no-save-checkpoints` if you do not want any `.pt` writes.
 
 PyTorch experiments default to `--num-workers 8` for DataLoader. Lower it if your machine feels overloaded.
 
+For PyTorch experiments, an existing `checkpoints/best.pt` is reused by default. The script skips training and goes straight to evaluation/report generation. Add `--force-train` when you intentionally want to train again.
+
 ### Experiment 02: retrieval
 
 ```bash
@@ -78,6 +80,13 @@ PyTorch experiments default to `--num-workers 8` for DataLoader. Lower it if you
 ```bash
 ./05-sequential-recommendation/gru4rec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ./05-sequential-recommendation/sasrec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+### Experiment 06: graph recommendation
+
+```bash
+./06-graph-recommendation/lightgcn/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./06-graph-recommendation/ngcf/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
 
 Each experiment writes:

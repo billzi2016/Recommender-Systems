@@ -113,8 +113,12 @@ nav:
               - Report: algorithms/sequential-recommendation/sasrec/report.md
       - Graph recommendation:
           - Overview: algorithms/graph-recommendation/index.md
-          - LightGCN: algorithms/graph-recommendation/lightgcn/index.md
-          - NGCF: algorithms/graph-recommendation/ngcf/index.md
+          - LightGCN:
+              - Guide: algorithms/graph-recommendation/lightgcn/index.md
+              - Report: algorithms/graph-recommendation/lightgcn/report.md
+          - NGCF:
+              - Guide: algorithms/graph-recommendation/ngcf/index.md
+              - Report: algorithms/graph-recommendation/ngcf/report.md
   - Project:
       - Documentation setup: project/documentation.md
       - Specs:

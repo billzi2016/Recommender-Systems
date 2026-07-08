@@ -115,6 +115,7 @@ def train_ranking_model(
     checkpoint_dir: Path | None,
     checkpoint_every: int,
     keep_checkpoints: int,
+    force_train: bool = False,
 ) -> RankingTrainResult:
     """训练深度精排模型，并用验证集 early stopping。
 
@@ -130,6 +131,7 @@ def train_ranking_model(
     seed_everything(42)
     device = get_device()
     model = model.to(device)
+    best_path = checkpoint_dir / "best.pt" if checkpoint_dir is not None else None
     # 训练集使用多 worker，提高 batch 准备速度。
     # `dataloader_kwargs` 会在 CUDA 上开启 pin_memory，在 MPS/CPU 上不开。
     train_loader = DataLoader(
@@ -143,6 +145,16 @@ def train_ranking_model(
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
     criterion = nn.BCEWithLogitsLoss()
+
+    if best_path is not None and best_path.exists() and not force_train:
+        # 04 组 best.pt 只在训练结束后保存。
+        # 如果已经存在，默认直接加载它，跳过昂贵的精排训练并重新生成 report。
+        print(f"[ranking] 检测到已有 best checkpoint，跳过训练并加载：{best_path}")
+        checkpoint = torch.load(best_path, map_location=device)
+        model.load_state_dict(checkpoint["model_state"])
+        valid_loss, valid_auc, valid_accuracy = _evaluate(model, valid_loader, device)
+        cleanup_dataloaders(train_loader, valid_loader)
+        return RankingTrainResult(model, valid_loss, valid_auc, valid_accuracy, int(checkpoint.get("epoch", 0)), str(device))
 
     best_loss = float("inf")
     best_auc = 0.0

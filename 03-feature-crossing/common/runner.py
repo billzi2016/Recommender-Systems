@@ -50,6 +50,7 @@ def parse_feature_crossing_args(description: str) -> argparse.Namespace:
     checkpoint_group.add_argument("--no-save-checkpoints", dest="save_checkpoints", action="store_false", help="Do not write any .pt checkpoint files.")
     parser.add_argument("--checkpoint-every", type=int, default=20, help="Save one intermediate checkpoint every N epochs. Use 0 to keep only best.pt.")
     parser.add_argument("--keep-checkpoints", type=int, default=3, help="Keep at most this many intermediate checkpoints.")
+    parser.add_argument("--force-train", action="store_true", help="Ignore checkpoints/best.pt and train again.")
     return parser.parse_args()
 
 
@@ -125,6 +126,7 @@ def run_feature_crossing_experiment(kind: str, algorithm_dir: Path) -> None:
         checkpoint_dir=checkpoint_dir,
         checkpoint_every=args.checkpoint_every,
         keep_checkpoints=args.keep_checkpoints,
+        force_train=args.force_train,
     )
 
     examples, examples_zh = _prediction_examples(result.model, test, data.movies, user_to_feature, movie_to_feature, movie_genre_features, spec, args.eval_rows)

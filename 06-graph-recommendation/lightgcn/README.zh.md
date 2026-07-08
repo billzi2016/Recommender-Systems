@@ -152,3 +152,19 @@ BPR loss 就会惩罚它，推动 U1 更靠近 A，远离 C。
 第二，负样本不是严格负反馈。用户没看过某部电影，不代表不喜欢。BPR 里的负样本只是训练近似。
 
 第三，层数不要太深。传播太多层会让 embedding 过度平滑，最后用户和电影都变得差不多。第一版用 2 到 3 层就够了。
+
+## 运行
+
+默认全量运行：
+
+```bash
+./06-graph-recommendation/lightgcn/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+【非主线】想先快速试跑：
+
+```bash
+./06-graph-recommendation/lightgcn/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+默认命令只保存 `checkpoints/best.pt`。报告会写入验证指标、测试指标、推荐样例和 checkpoint 大小。

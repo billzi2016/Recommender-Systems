@@ -51,6 +51,8 @@ pip install -r requirements.txt
 
 PyTorch 实验默认 `--num-workers 8`。如果机器负载太高，可以调小。
 
+PyTorch 实验默认会复用已有的 `checkpoints/best.pt`。检测到这个文件时，脚本会跳过训练，直接进入评估和 report 生成。明确想重新训练时，再加 `--force-train`。
+
 ### 实验 02：召回
 
 ```bash
@@ -78,6 +80,13 @@ PyTorch 实验默认 `--num-workers 8`。如果机器负载太高，可以调小
 ```bash
 ./05-sequential-recommendation/gru4rec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ./05-sequential-recommendation/sasrec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+### 实验 06：图推荐
+
+```bash
+./06-graph-recommendation/lightgcn/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./06-graph-recommendation/ngcf/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
 
 每个实验都会生成：
