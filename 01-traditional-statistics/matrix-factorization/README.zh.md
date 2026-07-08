@@ -148,6 +148,39 @@ flowchart TB
 
 最后一步很关键。只看 RMSE 你很难感受到模型学到了什么。看最近邻电影时，你会发现有些结果很合理，有些很奇怪。奇怪的结果反而有用，它会逼你回头检查数据切分、训练轮数、正则化和评分标准。
 
+## 运行方式
+
+从仓库根目录运行：
+
+```bash
+./01-traditional-statistics/matrix-factorization/run.sh --sample-ratings 2000000
+```
+
+需要更大样本或全量数据时：
+
+```bash
+./01-traditional-statistics/matrix-factorization/run.sh --sample-ratings 5000000
+./01-traditional-statistics/matrix-factorization/run.sh --sample-ratings none
+```
+
+运行后会在本目录生成 `report.md` 和 `report.zh.md`。PyTorch 会自动选择 `cuda`、`mps` 或 `cpu`。
+
+默认最多训练 1000 轮，但会用验证集 RMSE 做 early stopping，不会为了凑满轮数硬跑。
+
+只保存最佳 checkpoint：
+
+```bash
+./01-traditional-statistics/matrix-factorization/run.sh --sample-ratings none --save-checkpoints --checkpoint-every 0
+```
+
+生成后的报告会记录 `.pt` 文件大小。想额外保留几个中间 checkpoint 时：
+
+```bash
+./01-traditional-statistics/matrix-factorization/run.sh --sample-ratings none --save-checkpoints --checkpoint-every 20 --keep-checkpoints 3
+```
+
+如果不想写任何 `.pt` 文件，可以加 `--no-save-checkpoints`。`checkpoints/` 已被 `.gitignore` 忽略。
+
 ## 常见坑
 
 不要把空格子当成 0 分。MovieLens 里的空格是未知，不是差评。

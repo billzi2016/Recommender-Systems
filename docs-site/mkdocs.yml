@@ -67,9 +67,15 @@ nav:
   - Algorithms:
       - Traditional statistics:
           - Overview: algorithms/traditional-statistics/index.md
-          - Item-CF: algorithms/traditional-statistics/item-cf/index.md
-          - User-CF: algorithms/traditional-statistics/user-cf/index.md
-          - Matrix factorization: algorithms/traditional-statistics/matrix-factorization/index.md
+          - Item-CF:
+              - Guide: algorithms/traditional-statistics/item-cf/index.md
+              - Report: algorithms/traditional-statistics/item-cf/report.md
+          - User-CF:
+              - Guide: algorithms/traditional-statistics/user-cf/index.md
+              - Report: algorithms/traditional-statistics/user-cf/report.md
+          - Matrix factorization:
+              - Guide: algorithms/traditional-statistics/matrix-factorization/index.md
+              - Report: algorithms/traditional-statistics/matrix-factorization/report.md
       - Retrieval:
           - Overview: algorithms/retrieval/index.md
           - Two tower TFRS: algorithms/retrieval/two-tower-tfrs/index.md

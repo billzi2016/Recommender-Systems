@@ -9,3 +9,87 @@ On MovieLens, build sequences sorted by timestamp. The model sees previous movie
 The first version should focus on correct masking and data splitting. If the model can accidentally see future movies, the metric will look good for the wrong reason.
 
 SASRec is a strong baseline because it keeps the recommendation problem close to next token prediction, but with movie IDs instead of words.
+
+## Why order matters
+
+The same set of movies can imply different next choices depending on order. A user who watched three sci-fi movies this week may have a current sci-fi intent. A user who watched those movies years apart may not.
+
+```mermaid
+flowchart LR
+  A[Movie A] --> B[Movie B]
+  B --> C[Movie C]
+  C --> Q[Predict next movie]
+```
+
+## What self attention does
+
+When predicting the next movie, SASRec looks back at earlier positions and learns which ones matter most.
+
+Example history:
+
+```text
+Toy Story -> Finding Nemo -> The Incredibles -> The Dark Knight
+```
+
+The recent movie may matter most, but older animation movies may still reveal long-term taste.
+
+```mermaid
+flowchart TB
+  H1[Toy Story] --> Attn[Attention layer]
+  H2[Finding Nemo] --> Attn
+  H3[The Incredibles] --> Attn
+  H4[The Dark Knight] --> Attn
+  Attn --> Next[Next movie distribution]
+```
+
+## One training sequence
+
+For a user sequence:
+
+```text
+[Toy Story, Finding Nemo, The Incredibles, WALL-E, Up]
+```
+
+Training examples:
+
+| Input sequence | Target |
+| --- | --- |
+| Toy Story | Finding Nemo |
+| Toy Story, Finding Nemo | The Incredibles |
+| Toy Story, Finding Nemo, The Incredibles | WALL-E |
+| Toy Story, Finding Nemo, The Incredibles, WALL-E | Up |
+
+If max length is 3, the last example becomes:
+
+```text
+input: Finding Nemo, The Incredibles, WALL-E
+target: Up
+```
+
+## Why causal mask matters
+
+When predicting `C` from `A, B, C, D`, the model must not see `D`. A causal mask blocks future positions.
+
+```mermaid
+flowchart LR
+  Past[Past movies<br/>visible] --> Now[Current position]
+  Future[Future movies<br/>blocked] -.must not see.-> Now
+```
+
+If the mask is wrong, metrics can look great for the wrong reason.
+
+## Run
+
+Runnable PyTorch SASRec code will follow:
+
+```bash
+./05-sequential-recommendation/sasrec/run.sh --sample-ratings 2000000
+```
+
+## Common mistakes
+
+Do not shuffle a user's history.
+
+Do not let future movies enter the training prefix.
+
+Start with a modest max sequence length such as 50 or 100.

@@ -131,6 +131,23 @@ Item-CF 适合第一个写，因为推荐结果容易解释。推荐了哪部电
 
 第三个坑是没有做已看过滤。如果把用户已经评分过的电影又推荐给他，指标可能看起来还行，但真实推荐体验很差。
 
+## 运行方式
+
+从仓库根目录运行：
+
+```bash
+./01-traditional-statistics/item-cf/run.sh --sample-ratings 2000000
+```
+
+需要更大样本或全量数据时：
+
+```bash
+./01-traditional-statistics/item-cf/run.sh --sample-ratings 5000000
+./01-traditional-statistics/item-cf/run.sh --sample-ratings none
+```
+
+运行后会在本目录生成 `report.md` 和 `report.zh.md`。
+
 ## 读完应该能回答
 
 - Item-CF 为什么比 User-CF 更适合提前计算？

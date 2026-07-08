@@ -49,6 +49,7 @@ dataset-movie_lens/raw/*
 !dataset-movie_lens/raw/*.md5
 !dataset-movie_lens/raw/README.md
 !dataset-movie_lens/raw/README.zh.md
+dataset-movie_lens/raw/ml-*/
 
 # ==============================
 # MovieLens processed experiment data
@@ -66,6 +67,16 @@ dataset-movie_lens/processed/*
 # ==============================
 .ipynb_checkpoints/
 reports/generated/
+
+# ==============================
+# Model checkpoints
+#
+# Experiments may save one best checkpoint and a few sparse intermediate
+# checkpoints locally. These files can become large and should not enter git.
+# ==============================
+**/checkpoints/
+*.pt
+*.pth
 
 # ==============================
 # MkDocs build output

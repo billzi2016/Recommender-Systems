@@ -63,6 +63,23 @@ User-CF 依赖用户之间的共同评分。如果两个用户只共同看过一
 6. 取 top K 邻居。
 7. 汇总邻居喜欢但目标用户没看过的电影。
 
+## 运行方式
+
+从仓库根目录运行：
+
+```bash
+./01-traditional-statistics/user-cf/run.sh --sample-ratings 2000000
+```
+
+需要更大样本或全量数据时：
+
+```bash
+./01-traditional-statistics/user-cf/run.sh --sample-ratings 5000000
+./01-traditional-statistics/user-cf/run.sh --sample-ratings none
+```
+
+运行后会在本目录生成 `report.md` 和 `report.zh.md`。
+
 ## 读完应该能回答
 
 - User-CF 为什么像“找口味接近的朋友”？
