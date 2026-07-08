@@ -26,7 +26,14 @@ from utils.torch_utils import dataloader_kwargs, get_device, seed_everything
 
 
 class MatrixFactorization(nn.Module):
-    """带偏置的矩阵分解模型。"""
+    """带偏置的矩阵分解模型。
+
+    基础矩阵分解只做 `user_embedding dot movie_embedding`。
+    这里额外加入：
+    - 全局均值：数据集整体评分水平。
+    - 用户偏置：有些用户天生打分更宽松或更严格。
+    - 电影偏置：有些电影整体更容易拿高分。
+    """
 
     def __init__(self, n_users: int, n_movies: int, n_factors: int, global_mean: float) -> None:
         super().__init__()
@@ -37,7 +44,10 @@ class MatrixFactorization(nn.Module):
         self.register_buffer("global_mean", torch.tensor(float(global_mean)))
 
     def forward(self, user_ids: torch.Tensor, movie_ids: torch.Tensor) -> torch.Tensor:
-        """预测一批用户-电影评分。"""
+        """预测一批用户-电影评分。
+
+        输出是连续分数，用 MSELoss 和真实 1-5 评分做回归。
+        """
 
         user_vec = self.user_embedding(user_ids)
         movie_vec = self.movie_embedding(movie_ids)
@@ -49,7 +59,11 @@ class MatrixFactorization(nn.Module):
 
 @dataclass
 class MFResult:
-    """矩阵分解训练结果。"""
+    """矩阵分解训练结果。
+
+    训练后除了模型本身，还要保留 ID 映射。
+    没有这些映射，报告阶段就无法把 embedding 下标转回原始 movieId。
+    """
 
     model: MatrixFactorization
     user_to_index: dict[int, int]
@@ -60,7 +74,11 @@ class MFResult:
 
 
 def _to_tensors(ratings: pd.DataFrame, user_to_index: dict[int, int], movie_to_index: dict[int, int]) -> TensorDataset:
-    """把评分 DataFrame 转成 PyTorch TensorDataset。"""
+    """把评分 DataFrame 转成 PyTorch TensorDataset。
+
+    这里假设传入 ratings 已经过滤到训练中见过的用户和电影。
+    如果直接 map 冷启动 ID，会出现 NaN，不能转成 embedding 下标。
+    """
 
     users = ratings["userId"].map(user_to_index).to_numpy()
     movies = ratings["movieId"].map(movie_to_index).to_numpy()
@@ -95,6 +113,7 @@ def train_mf(
     """
 
     seed_everything(42)
+    # 只用训练集建立 ID 映射，避免验证集/测试集信息提前进入模型。
     user_to_index, _ = make_id_maps(train["userId"])
     movie_to_index, index_to_movie = make_id_maps(train["movieId"])
 
@@ -107,6 +126,8 @@ def train_mf(
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-5)
     loss_fn = nn.MSELoss()
 
+    # 训练 DataLoader 使用通用性能参数：
+    # CUDA 才 pin_memory，MPS/CPU 不 pin；num_workers > 0 才 persistent_workers。
     loader = DataLoader(
         _to_tensors(train, user_to_index, movie_to_index),
         batch_size=batch_size,
@@ -151,6 +172,8 @@ def train_mf(
                 print(f"[MF] early stopping: validation RMSE has not improved for {patience} epochs.")
                 break
 
+        # 中间 checkpoint 不是主线，默认 checkpoint_every=0 不会写。
+        # 如果用户打开，也只保留少量最近文件。
         if checkpoint_dir is not None and checkpoint_every > 0 and (epoch + 1) % checkpoint_every == 0:
             checkpoint_dir.mkdir(parents=True, exist_ok=True)
             checkpoint_path = checkpoint_dir / f"epoch_{epoch + 1:04d}.pt"
@@ -169,6 +192,7 @@ def train_mf(
 
     model.load_state_dict(best_state)
     if checkpoint_dir is not None:
+        # best.pt 只在训练结束后写一次，避免每次验证提升都覆盖磁盘。
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
         torch.save(
             {
@@ -189,12 +213,18 @@ def evaluate_mf(
     movie_to_index: dict[int, int],
     device: torch.device,
 ) -> dict[str, float]:
-    """在测试集上计算 RMSE 和 MAE。"""
+    """在测试集上计算 RMSE 和 MAE。
+
+    RMSE 对大误差更敏感，MAE 更直观。
+    两个指标一起看，可以避免只看一个数字误判模型表现。
+    """
 
     if ratings.empty:
         return {"rmse": 0.0, "mae": 0.0}
 
     dataset = _to_tensors(ratings, user_to_index, movie_to_index)
+    # 评估阶段不反向传播，也不需要 shuffle。
+    # 保持 num_workers=0，让评估逻辑更简单稳定。
     loader = DataLoader(dataset, batch_size=8192, num_workers=0)
     preds: list[np.ndarray] = []
     actuals: list[np.ndarray] = []
@@ -213,13 +243,18 @@ def evaluate_mf(
 
 
 def similar_movies(result: MFResult, movie_id: int, top_k: int = 10) -> list[tuple[int, float]]:
-    """基于电影 embedding 找相似电影。"""
+    """基于电影 embedding 找相似电影。
+
+    这不是独立的推荐算法，而是帮助初学者理解 embedding：
+    如果模型学得合理，相似电影在向量空间里应该更接近。
+    """
 
     if movie_id not in result.movie_to_index:
         return []
     model = result.model
     model.eval()
     with torch.no_grad():
+        # 把 embedding 拉回 CPU 做相似度，避免为了报告样例占用 GPU/MPS。
         embeddings = model.movie_embedding.weight.detach().cpu()
         target_index = result.movie_to_index[movie_id]
         target = embeddings[target_index]

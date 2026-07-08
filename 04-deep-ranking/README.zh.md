@@ -7,3 +7,21 @@
 精排和召回的目标不一样。召回怕漏掉好东西，精排怕顺序排错。到了精排阶段，模型可以看更多特征，也可以用更复杂的交互方式。
 
 这一组先看 NCF，理解为什么有人想用 MLP 替代点积。再看 Wide & Deep 和 DCN，理解工业排序模型里“记忆规则”和“学习交叉”的思路。
+
+## 运行
+
+默认全量运行：
+
+```bash
+./04-deep-ranking/ncf/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./04-deep-ranking/wide-and-deep/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./04-deep-ranking/dcn/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+【非主线】想先快速试跑：
+
+```bash
+./04-deep-ranking/ncf/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+默认命令只保存 `checkpoints/best.pt`。生成的实验报告会写入验证指标、测试集预测样例和 checkpoint 大小。

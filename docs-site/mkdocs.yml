@@ -94,9 +94,15 @@ nav:
               - Report: algorithms/feature-crossing/xdeepfm/report.md
       - Deep ranking:
           - Overview: algorithms/deep-ranking/index.md
-          - NCF: algorithms/deep-ranking/ncf/index.md
-          - Wide and deep: algorithms/deep-ranking/wide-and-deep/index.md
-          - DCN: algorithms/deep-ranking/dcn/index.md
+          - NCF:
+              - Guide: algorithms/deep-ranking/ncf/index.md
+              - Report: algorithms/deep-ranking/ncf/report.md
+          - Wide and deep:
+              - Guide: algorithms/deep-ranking/wide-and-deep/index.md
+              - Report: algorithms/deep-ranking/wide-and-deep/report.md
+          - DCN:
+              - Guide: algorithms/deep-ranking/dcn/index.md
+              - Report: algorithms/deep-ranking/dcn/report.md
       - Sequential recommendation:
           - Overview: algorithms/sequential-recommendation/index.md
           - GRU4Rec: algorithms/sequential-recommendation/gru4rec/index.md

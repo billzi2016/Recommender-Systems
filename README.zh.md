@@ -65,6 +65,14 @@ PyTorch 实验默认 `--num-workers 8`。如果机器负载太高，可以调小
 ./03-feature-crossing/xdeepfm/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
 
+### 实验 04：深度精排
+
+```bash
+./04-deep-ranking/ncf/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./04-deep-ranking/wide-and-deep/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./04-deep-ranking/dcn/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
 每个实验都会生成：
 
 - `report.md`：英文实验报告

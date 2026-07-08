@@ -7,3 +7,19 @@ In many ranking problems, the important signal comes from feature combinations. 
 On MovieLens, DCN can use the same fields as DeepFM: user ID, movie ID, genres, and time buckets. It is a ranking model, so it should be evaluated after retrieval or on a sampled candidate set.
 
 The first version should compare DCN with a plain MLP using the same embeddings. That tells you whether the cross network is doing useful work.
+
+## Run
+
+Default full-dataset run:
+
+```bash
+./04-deep-ranking/dcn/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+Non-main path: for a faster trial run:
+
+```bash
+./04-deep-ranking/dcn/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+The default command saves only `checkpoints/best.pt`. The report records validation metrics, held-out prediction examples, and checkpoint size.

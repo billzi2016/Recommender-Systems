@@ -20,7 +20,19 @@ from tqdm.auto import tqdm
 
 @dataclass
 class UserCFModel:
-    """User-CF 训练后的必要对象。"""
+    """User-CF 训练后的必要对象。
+
+    user_to_row:
+        MovieLens 原始 userId 到稀疏矩阵行号的映射。
+    movie_to_col:
+        MovieLens 原始 movieId 到稀疏矩阵列号的映射。
+    col_to_movie:
+        反向映射，用于把推荐结果从矩阵列号转回真实 movieId。
+    matrix:
+        user-item 稀疏矩阵。每一行是一个用户，每一列是一部电影。
+    neighbors:
+        sklearn 近邻模型，负责找相似用户。
+    """
 
     user_to_row: dict[int, int]
     movie_to_col: dict[int, int]
@@ -36,6 +48,8 @@ def fit_user_cf(ratings: pd.DataFrame, positive_threshold: float = 4.0) -> UserC
     每一行是一个用户，每一列是一部电影。
     """
 
+    # User-CF 第一版只看正反馈。
+    # 用二值矩阵可以让“相似用户”更容易解释：他们喜欢过相似的电影集合。
     positives = ratings[ratings["rating"] >= positive_threshold].copy()
     users = sorted(positives["userId"].unique())
     movies = sorted(positives["movieId"].unique())
@@ -43,11 +57,14 @@ def fit_user_cf(ratings: pd.DataFrame, positive_threshold: float = 4.0) -> UserC
     movie_to_col = {int(movie_id): col for col, movie_id in enumerate(movies)}
     col_to_movie = {col: movie_id for movie_id, col in movie_to_col.items()}
 
+    # 原始 ID 不能直接作为稀疏矩阵下标，所以先映射成连续整数。
     rows = positives["userId"].map(user_to_row).to_numpy()
     cols = positives["movieId"].map(movie_to_col).to_numpy()
     values = [1.0] * len(positives)
     matrix = csr_matrix((values, (rows, cols)), shape=(len(users), len(movies)))
 
+    # 用户数量虽然不少，但 MovieLens 本地实验用 brute force 余弦近邻足够清楚。
+    # 真正超大规模时可以换 ANN 索引，但那不是第一版重点。
     neighbors = NearestNeighbors(metric="cosine", algorithm="brute")
     neighbors.fit(matrix)
     return UserCFModel(user_to_row, movie_to_col, col_to_movie, matrix, neighbors)
@@ -66,6 +83,8 @@ def recommend_for_user(model: UserCFModel, ratings: pd.DataFrame, user_id: int, 
     if user_id not in model.user_to_row:
         return []
 
+    # seen 用来过滤已经评分过的电影。
+    # 推荐系统通常不应该把用户已经明确看过/评过的物品再次作为新推荐。
     seen = set(ratings[ratings["userId"] == user_id]["movieId"].tolist())
     row = model.user_to_row[user_id]
     distances, indices = model.neighbors.kneighbors(model.matrix[row], n_neighbors=min(neighbors_k + 1, model.matrix.shape[0]))
@@ -75,6 +94,8 @@ def recommend_for_user(model: UserCFModel, ratings: pd.DataFrame, user_id: int, 
         if int(neighbor_row) == row:
             continue
         similarity = 1.0 - float(distance)
+        # 邻居喜欢过的电影都会给候选加分。
+        # 越相似的邻居，贡献越大；多个邻居都喜欢同一部电影，分数会累加。
         liked_cols = model.matrix[int(neighbor_row)].indices
         for col in liked_cols:
             movie_id = model.col_to_movie[int(col)]
@@ -83,4 +104,3 @@ def recommend_for_user(model: UserCFModel, ratings: pd.DataFrame, user_id: int, 
             scores[movie_id] = scores.get(movie_id, 0.0) + similarity
 
     return sorted(scores.items(), key=lambda item: item[1], reverse=True)[:top_k]
-

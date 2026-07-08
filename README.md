@@ -65,6 +65,14 @@ PyTorch experiments default to `--num-workers 8` for DataLoader. Lower it if you
 ./03-feature-crossing/xdeepfm/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
 
+### Experiment 04: deep ranking
+
+```bash
+./04-deep-ranking/ncf/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./04-deep-ranking/wide-and-deep/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./04-deep-ranking/dcn/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
 Each experiment writes:
 
 - `report.md`: English report

@@ -19,3 +19,19 @@ flowchart LR
 DCN 的直觉是：有些组合非常重要，比如“某用户 + 某类型 + 某时间段”。手写所有组合太累，普通 MLP 又不够直接。Cross Network 让模型用更结构化的方式反复混合原始特征。
 
 在 MovieLens 上，第一版可以使用用户 ID、电影 ID、genres 和时间段。不要一开始堆太多层。先跑普通 MLP，再加 cross layer，对比同一套指标和推荐样例。
+
+## 运行
+
+默认全量运行：
+
+```bash
+./04-deep-ranking/dcn/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+【非主线】想先快速试跑：
+
+```bash
+./04-deep-ranking/dcn/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+默认命令只保存 `checkpoints/best.pt`。报告会写入验证指标、测试集预测样例和 checkpoint 大小。

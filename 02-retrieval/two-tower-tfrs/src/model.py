@@ -56,7 +56,12 @@ class TwoTower(nn.Module):
 
 @dataclass
 class TwoTowerResult:
-    """双塔训练结果。"""
+    """双塔训练结果。
+
+    这里同时保留正向和反向 ID 映射：
+    - 训练和预测时用连续 index 查 embedding。
+    - 写报告和输出推荐时，要把 index 转回 MovieLens 原始 movieId。
+    """
 
     model: TwoTower
     user_to_index: dict[int, int]
@@ -79,6 +84,13 @@ def build_positive_interactions(ratings: pd.DataFrame, positive_threshold: float
 
 
 def _dataset(interactions: pd.DataFrame, user_to_index: dict[int, int], movie_to_index: dict[int, int]) -> TensorDataset:
+    """把正样本表转换成 TensorDataset。
+
+    双塔训练只需要用户 index 和电影 index。
+    标签不需要显式保存，因为一个 batch 里第 i 个用户对应第 i 个电影，
+    CrossEntropy 的目标标签就是 `[0, 1, 2, ...]` 这条对角线。
+    """
+
     users = interactions["userId"].map(user_to_index).to_numpy()
     movies = interactions["movieId"].map(movie_to_index).to_numpy()
     return TensorDataset(torch.tensor(users, dtype=torch.long), torch.tensor(movies, dtype=torch.long))
@@ -107,9 +119,13 @@ def train_two_tower(
     seed_everything(42)
     train_pos = build_positive_interactions(train)
     valid_pos = build_positive_interactions(valid)
+    # embedding 只能查训练中出现过的 ID。
+    # 这里用训练正样本建映射，验证集中冷启动用户/电影会在下面过滤掉。
     user_to_index, index_to_user = make_id_maps(train_pos["userId"])
     movie_to_index, index_to_movie = make_id_maps(train_pos["movieId"])
 
+    # 验证集里可能有训练没见过的电影或用户。
+    # 第一版先过滤，避免把冷启动问题混进双塔召回的主线。
     valid_known = valid_pos[valid_pos["userId"].isin(user_to_index) & valid_pos["movieId"].isin(movie_to_index)].copy()
     device = get_device()
     model = TwoTower(len(user_to_index), len(movie_to_index), embedding_dim=embedding_dim).to(device)
@@ -123,6 +139,8 @@ def train_two_tower(
         drop_last=True,
         **dataloader_kwargs(device, num_workers),
     )
+    # 验证 loss 也用 batch 内负样本。drop_last=True 是为了保持每个 batch 的
+    # 对角线标签形状稳定，最后不足一个 batch 的样本直接跳过。
     valid_loader = DataLoader(_dataset(valid_known, user_to_index, movie_to_index), batch_size=batch_size, shuffle=False, drop_last=True, num_workers=0)
 
     best_valid_loss = float("inf")
@@ -136,6 +154,8 @@ def train_two_tower(
         for users, movies in tqdm(train_loader, desc=f"TwoTower epoch {epoch + 1}/{max_epochs}", unit="batch"):
             users = users.to(device)
             movies = movies.to(device)
+            # batch 内第 i 个 user 的正样本就是第 i 个 movie。
+            # 其他 movie 临时作为负样本，这就是 in-batch negative 的核心。
             labels = torch.arange(users.shape[0], device=device)
             optimizer.zero_grad()
             logits = model(users, movies)
@@ -151,6 +171,7 @@ def train_two_tower(
             f"valid_loss={valid_loss:.4f}"
         )
 
+        # 用一个很小的阈值过滤浮点抖动，避免验证 loss 只好一点点也重置耐心。
         if valid_loss < best_valid_loss - 1e-4:
             best_valid_loss = valid_loss
             best_state = copy.deepcopy(model.state_dict())
@@ -161,6 +182,8 @@ def train_two_tower(
                 print(f"[TwoTower] early stopping: validation loss has not improved for {patience} epochs.")
                 break
 
+        # 中间 checkpoint 默认关闭。只有用户显式设置 checkpoint_every 时才写，
+        # 并且最多保留 keep_checkpoints 个，避免长期训练频繁写 SSD。
         if checkpoint_dir is not None and checkpoint_every > 0 and (epoch + 1) % checkpoint_every == 0:
             checkpoint_dir.mkdir(parents=True, exist_ok=True)
             checkpoint_path = checkpoint_dir / f"epoch_{epoch + 1:04d}.pt"
@@ -178,6 +201,8 @@ def train_two_tower(
 
     model.load_state_dict(best_state)
     if checkpoint_dir is not None:
+        # best.pt 只在训练结束后写一次。
+        # 这样既能保留最好模型，又不会每次验证提升都覆盖磁盘文件。
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
         torch.save(
             {
@@ -192,7 +217,11 @@ def train_two_tower(
 
 
 def evaluate_loss(model: TwoTower, loader: DataLoader, device: torch.device) -> float:
-    """计算验证集 batch 内负样本 loss。"""
+    """计算验证集 batch 内负样本 loss。
+
+    这个 loss 不是最终推荐质量的全部，只是 early stopping 的训练信号。
+    真正给用户看的报告还会计算 recall/precision/NDCG 这类排序指标。
+    """
 
     if len(loader) == 0:
         return 0.0
@@ -223,6 +252,8 @@ def recommend_for_users(result: TwoTowerResult, train: pd.DataFrame, user_ids: l
     output: dict[int, list[int]] = {}
 
     with torch.no_grad():
+        # 先一次性算出所有电影向量，后面每个用户只需要做一次矩阵乘法。
+        # MovieLens 电影数量不大，这比引入 ANN 索引更容易看懂。
         movie_vectors = model.encode_movies(all_movie_indices)
         for user_id in tqdm(user_ids, desc="Retrieving candidates", unit="user"):
             if user_id not in result.user_to_index:

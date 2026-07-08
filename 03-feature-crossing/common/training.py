@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-"""特征交叉模型的训练和评估循环。"""
+"""特征交叉模型的训练和评估循环。
+
+FM、DeepFM、xDeepFM 的输入形式一致，训练目标也一致。
+因此这里共用一套训练循环，避免三个算法目录复制大段代码。
+"""
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,7 +21,11 @@ from utils.torch_utils import dataloader_kwargs, get_device, seed_everything
 
 @dataclass
 class TrainingResult:
-    """训练结束后报告需要用到的信息。"""
+    """训练结束后报告需要用到的信息。
+
+    这里只保存 report 需要展示的最小信息：
+    最佳验证 loss、AUC、实际训练轮数和设备名称。
+    """
 
     model: nn.Module
     best_valid_loss: float
@@ -27,7 +35,12 @@ class TrainingResult:
 
 
 def _evaluate(model: nn.Module, loader: DataLoader, device: torch.device) -> tuple[float, float, float]:
-    """计算验证集 loss、AUC 和 accuracy。"""
+    """计算验证集 logloss、AUC 和 accuracy。
+
+    logloss 用来 early stopping。
+    AUC 更接近排序视角：正样本是否排在负样本前面。
+    accuracy 直观但会受正负样本比例影响，只作为辅助观察。
+    """
 
     criterion = nn.BCEWithLogitsLoss()
     model.eval()
@@ -85,12 +98,15 @@ def train_feature_crossing_model(
     seed_everything(42)
     device = get_device()
     model = model.to(device)
+    # 训练集用多 worker 准备 batch；pin_memory 只会在 CUDA 上开启。
+    # MPS/CPU 不强行 pin，避免增加内存压力。
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
         **dataloader_kwargs(device, num_workers),
     )
+    # 验证集不 shuffle，且不需要 persistent worker。
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
     criterion = nn.BCEWithLogitsLoss()
@@ -119,6 +135,7 @@ def train_feature_crossing_model(
         valid_loss, valid_auc, valid_accuracy = _evaluate(model, valid_loader, device)
         print(f"[feature-crossing] epoch={epoch} valid_logloss={valid_loss:.4f} valid_auc={valid_auc:.4f} valid_accuracy={valid_accuracy:.4f}")
 
+        # FM 系列 loss 可能有轻微抖动，这里用严格小于作为“变好”的判断。
         if valid_loss < best_loss:
             best_loss = valid_loss
             best_auc = valid_auc
@@ -127,6 +144,7 @@ def train_feature_crossing_model(
         else:
             stale_epochs += 1
 
+        # 中间 checkpoint 默认关闭；用户显式设置 checkpoint_every 才会保存。
         if checkpoint_dir is not None and checkpoint_every > 0 and epoch % checkpoint_every == 0:
             checkpoint_path = checkpoint_dir / f"epoch-{epoch:04d}.pt"
             _save_checkpoint(checkpoint_path, model, epoch, {"valid_logloss": valid_loss, "valid_auc": valid_auc, "valid_accuracy": valid_accuracy})
@@ -143,6 +161,7 @@ def train_feature_crossing_model(
     if best_state is not None:
         model.load_state_dict(best_state)
     if checkpoint_dir is not None:
+        # best.pt 只在训练结束后写一次，避免频繁覆盖 SSD。
         _save_checkpoint(checkpoint_dir / "best.pt", model, epochs_ran, {"valid_logloss": best_loss, "valid_auc": best_auc})
 
     return TrainingResult(model=model, best_valid_loss=best_loss, best_valid_auc=best_auc, device_name=str(device), epochs_ran=epochs_ran)

@@ -23,7 +23,11 @@ from utils.cli import add_sample_ratings_arg, parse_sample_ratings, sample_ratin
 
 
 def parse_args() -> argparse.Namespace:
-    """解析实验参数，只保留当前需要的采样配置。"""
+    """解析实验参数，只保留当前需要的采样配置。
+
+    User-CF 没有训练轮数、学习率、checkpoint 这些概念。
+    所以入口只暴露 `--sample-ratings`，避免命令行参数显得比算法本身还复杂。
+    """
 
     parser = argparse.ArgumentParser(description="Run User-CF on MovieLens.")
     add_sample_ratings_arg(parser)
@@ -31,7 +35,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    """运行 User-CF，并生成 report.md / report.zh.md。"""
+    """运行 User-CF，并生成 report.md / report.zh.md。
+
+    报告里的 precision/recall 只基于一个样例用户。
+    这个实验重点是看懂 User-CF 的推荐流程，不把它包装成完整线上评测系统。
+    """
 
     args = parse_args()
     sample_ratings = parse_sample_ratings(args.sample_ratings)
@@ -43,6 +51,7 @@ def main() -> None:
     print("[User-CF] 使用 sklearn NearestNeighbors 训练用户-用户相似度。")
     model = fit_user_cf(train)
 
+    # 选择测试集中记录最多的用户，通常能得到更可读的推荐样例。
     user_id = int(test["userId"].value_counts().index[0]) if len(test) else int(train["userId"].iloc[0])
     recommendations = recommend_for_user(model, train, user_id=user_id, top_k=10)
     rec_df = attach_titles(pd.DataFrame(recommendations, columns=["movieId", "score"]), data.movies)

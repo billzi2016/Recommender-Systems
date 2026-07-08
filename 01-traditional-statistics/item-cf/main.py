@@ -41,7 +41,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    """运行一次完整 Item-CF 实验，并生成报告。"""
+    """运行一次完整 Item-CF 实验，并生成报告。
+
+    这里的报告不是假数据，也不是预写结论。
+    用户实际运行脚本后，report 会被当前数据切分、当前参数下的真实结果覆盖。
+    """
 
     args = parse_args()
     sample_ratings = parse_sample_ratings(args.sample_ratings)
@@ -53,6 +57,8 @@ def main() -> None:
     print("[Item-CF] 使用 sklearn NearestNeighbors 训练电影-电影相似度。")
     model = fit_item_cf(train)
 
+    # 为了让样例更容易读，优先选择测试集中行为较多的用户。
+    # 如果测试集为空，就退回训练集第一个用户，保证脚本仍能生成报告。
     user_id = int(test["userId"].value_counts().index[0]) if len(test) else int(train["userId"].iloc[0])
     recommendations = recommend_for_user(model, train, user_id=user_id, top_k=10)
     rec_df = attach_titles(

@@ -23,7 +23,12 @@ from utils.reports import write_report
 
 
 def parse_args() -> argparse.Namespace:
-    """解析双塔实验参数。"""
+    """解析双塔实验参数。
+
+    参数保持在少数几个真正会调的维度上：
+    数据规模、embedding 大小、batch 大小、early stopping、DataLoader worker
+    和 checkpoint 策略。这样命令行足够实用，但不会变成一个复杂 CLI 项目。
+    """
 
     parser = argparse.ArgumentParser(description="Run PyTorch two tower retrieval on MovieLens.")
     add_sample_ratings_arg(parser)
@@ -74,13 +79,22 @@ def report_examples(recommendations: dict[int, list[int]], train: pd.DataFrame, 
 
 
 def main() -> None:
-    """运行双塔召回实验，并生成 report.md / report.zh.md。"""
+    """运行双塔召回实验，并生成 report.md / report.zh.md。
+
+    流程分成四步：
+    1. 按用户时间切分，避免用未来行为预测过去。
+    2. 训练双塔，让高评分电影和用户向量靠近。
+    3. 对测试用户召回 top-k 候选。
+    4. 写入真实指标、样例和 checkpoint 大小。
+    """
 
     args = parse_args()
     sample_ratings = parse_sample_ratings(args.sample_ratings)
     sample_text = sample_ratings_text(sample_ratings)
     print(f"[TwoTower] 读取 MovieLens：{sample_text}。")
     data = load_movielens(sample_ratings=sample_ratings)
+    # 先切出测试集，再从 train_valid 里切验证集。
+    # 这样验证集用于 early stopping，测试集用于最终报告指标。
     train_valid, test = train_test_by_user_time(data.ratings)
     train, valid = train_test_by_user_time(train_valid)
 
@@ -108,6 +122,8 @@ def main() -> None:
         int(user_id): set(group[group["rating"] >= 4.0]["movieId"].tolist())
         for user_id, group in test.groupby("userId")
     }
+    # 只评估训练中见过、且测试集中确实有高评分电影的用户。
+    # 否则 recall/NDCG 没有明确意义。
     eval_users = [user_id for user_id in relevant_by_user if user_id in result.user_to_index and relevant_by_user[user_id]][: args.eval_users]
     recommendations = recommend_for_users(result, train, eval_users, top_k=10)
     metrics = mean_ranking_metrics(recommendations, relevant_by_user, k=10)

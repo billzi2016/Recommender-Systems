@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+"""实验报告写入工具。
+
+每个实验最终都会写 `report.md` 和 `report.zh.md`。
+这个模块只负责统一 Markdown 结构，不负责生成指标，也不负责编造样例。
+调用方必须把真实运行结果传进来。
+"""
+
 from pathlib import Path
 
 
@@ -24,6 +31,7 @@ def write_report(
     """
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    # 指标统一保留 4 位小数，避免不同实验 report 小数位风格不一致。
     metrics_md = "\n".join(f"- `{name}`: `{value:.4f}`" for name, value in metrics.items())
     metrics_zh_md = "\n".join(f"- `{name}`：`{value:.4f}`" for name, value in metrics.items())
 

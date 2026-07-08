@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-"""FM 系列实验的统一入口逻辑。"""
+"""FM 系列实验的统一入口逻辑。
+
+03 组实验的差异主要在模型结构，数据读取、切分、训练、写报告都一样。
+把公共流程集中到 runner，可以让 FM/DeepFM/xDeepFM 的 main.py 保持很薄。
+"""
 
 import argparse
 from pathlib import Path
@@ -26,7 +30,11 @@ MODEL_TITLES = {
 
 
 def parse_feature_crossing_args(description: str) -> argparse.Namespace:
-    """解析 FM 系列实验共用参数。"""
+    """解析 FM 系列实验共用参数。
+
+    这里保留必要参数，不做复杂 CLI：
+    数据规模、embedding 维度、batch、worker、early stopping 和 checkpoint。
+    """
 
     parser = argparse.ArgumentParser(description=description)
     add_sample_ratings_arg(parser)
@@ -46,7 +54,11 @@ def parse_feature_crossing_args(description: str) -> argparse.Namespace:
 
 
 def _prediction_examples(model, test: pd.DataFrame, movies: pd.DataFrame, user_to_feature: dict[int, int], movie_to_feature: dict[int, int], movie_genre_features, spec, eval_rows: int) -> tuple[str, str]:
-    """从测试集里抽一小段，展示模型认为更可能喜欢的电影。"""
+    """从测试集里抽一小段，展示模型认为更可能喜欢的电影。
+
+    这不是完整推荐列表，只是报告里的人工检查窗口。
+    如果指标不错但样例很奇怪，说明还要继续查切分、特征或标签。
+    """
 
     sample = test.head(eval_rows).copy()
     dataset = build_dataset(sample, user_to_feature, movie_to_feature, movie_genre_features, spec)
@@ -67,7 +79,15 @@ def _prediction_examples(model, test: pd.DataFrame, movies: pd.DataFrame, user_t
 
 
 def run_feature_crossing_experiment(kind: str, algorithm_dir: Path) -> None:
-    """运行一个 FM 系列实验并写报告。"""
+    """运行一个 FM 系列实验并写报告。
+
+    主流程：
+    1. 读取 MovieLens。
+    2. 按用户时间切分 train/valid/test。
+    3. 构建稀疏特征编号。
+    4. 训练指定模型。
+    5. 写入真实指标、样例和 checkpoint 大小。
+    """
 
     title, title_zh = MODEL_TITLES[kind]
     args = parse_feature_crossing_args(f"Run {title} on MovieLens.")
@@ -76,6 +96,8 @@ def run_feature_crossing_experiment(kind: str, algorithm_dir: Path) -> None:
 
     print(f"[{kind}] 读取 MovieLens：{sample_text}。")
     data = load_movielens(sample_ratings=sample_ratings)
+    # 先留出测试集，再从训练部分切验证集。
+    # 验证集只服务 early stopping，测试集用于报告里的最终观察。
     train_valid, test = train_test_by_user_time(data.ratings)
     train, valid = train_test_by_user_time(train_valid)
 
@@ -137,4 +159,3 @@ def run_feature_crossing_experiment(kind: str, algorithm_dir: Path) -> None:
         examples_zh,
     )
     print(f"[{kind}] 已生成 report.md 和 report.zh.md")
-

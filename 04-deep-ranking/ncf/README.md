@@ -91,11 +91,19 @@ If recommendations are only popular movies, check negative sampling. If they are
 
 ## Run
 
-Runnable PyTorch NCF code will follow:
+Default full-dataset run:
 
 ```bash
-./04-deep-ranking/ncf/run.sh --sample-ratings 2000000
+./04-deep-ranking/ncf/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
+
+Non-main path: for a faster trial run:
+
+```bash
+./04-deep-ranking/ncf/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+The default command saves only `checkpoints/best.pt`. The report records validation metrics, held-out prediction examples, and checkpoint size.
 
 ## Common mistakes
 

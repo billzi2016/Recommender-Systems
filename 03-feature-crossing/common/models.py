@@ -11,7 +11,13 @@ from torch import nn
 
 
 class FactorizationMachine(nn.Module):
-    """标准二阶 FM，用 embedding 内积表示任意两个特征的关系。"""
+    """标准二阶 FM，用 embedding 内积表示任意两个特征的关系。
+
+    FM 的输出由三部分组成：
+    - 全局 bias。
+    - 每个特征自己的线性权重。
+    - 任意两个特征 embedding 的二阶交叉。
+    """
 
     def __init__(self, num_features: int, embedding_dim: int) -> None:
         super().__init__()
@@ -20,6 +26,13 @@ class FactorizationMachine(nn.Module):
         self.bias = nn.Parameter(torch.zeros(1))
 
     def forward(self, feature_ids: torch.Tensor) -> torch.Tensor:
+        """计算一批样本的 logit。
+
+        二阶交叉没有显式双重 for 循环。
+        公式 `0.5 * ((sum v)^2 - sum(v^2))` 可以一次性算出所有两两内积之和，
+        这是 FM 最经典、也最值得看懂的地方。
+        """
+
         linear_term = self.linear(feature_ids).sum(dim=1).squeeze(-1)
         vectors = self.embedding(feature_ids)
         summed = vectors.sum(dim=1)
@@ -48,6 +61,12 @@ class DeepFM(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, feature_ids: torch.Tensor) -> torch.Tensor:
+        """FM 分支和 deep 分支相加。
+
+        两个分支看的是同一批稀疏特征，但学习方式不同：
+        FM 显式保留二阶交叉，MLP 尝试学习更高阶的非线性组合。
+        """
+
         fm_logits = self.fm(feature_ids)
         deep_input = self.deep_embedding(feature_ids).flatten(start_dim=1)
         deep_logits = self.mlp(deep_input).squeeze(-1)
@@ -66,6 +85,12 @@ class CINLayer(nn.Module):
         self.conv = nn.Conv1d(previous_fields * original_fields, output_fields, kernel_size=1)
 
     def forward(self, x0: torch.Tensor, xk: torch.Tensor) -> torch.Tensor:
+        """计算一层 CIN 交叉。
+
+        `x0` 是原始字段 embedding，`xk` 是上一层输出。
+        einsum 生成字段之间的外积，再用 1x1 卷积压缩通道数。
+        """
+
         interactions = torch.einsum("bhd,bmd->bhmd", xk, x0)
         batch_size, previous_fields, original_fields, embedding_dim = interactions.shape
         interactions = interactions.reshape(batch_size, previous_fields * original_fields, embedding_dim)
@@ -73,7 +98,13 @@ class CINLayer(nn.Module):
 
 
 class XDeepFM(nn.Module):
-    """简化但保留核心机制的 xDeepFM。"""
+    """简化但保留核心机制的 xDeepFM。
+
+    xDeepFM 有三类信号：
+    - linear：单特征权重。
+    - CIN：显式高阶特征交叉。
+    - deep：普通 MLP 非线性表达。
+    """
 
     def __init__(
         self,
@@ -103,6 +134,8 @@ class XDeepFM(nn.Module):
         self.deep = nn.Sequential(*layers)
 
     def forward(self, feature_ids: torch.Tensor) -> torch.Tensor:
+        """合并 linear、CIN、deep 三路输出。"""
+
         linear_logits = self.linear(feature_ids).sum(dim=1).squeeze(-1)
         x0 = self.embedding(feature_ids)
         xk = x0
@@ -125,4 +158,3 @@ def build_model(kind: str, num_features: int, max_fields: int, embedding_dim: in
     if kind == "xdeepfm":
         return XDeepFM(num_features=num_features, max_fields=max_fields, embedding_dim=embedding_dim)
     raise ValueError(f"Unknown feature crossing model: {kind}")
-

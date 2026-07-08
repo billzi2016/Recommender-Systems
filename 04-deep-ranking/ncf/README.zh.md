@@ -98,6 +98,22 @@ flowchart TB
 
 如果推荐和用户历史完全没关系，先检查负采样、ID 映射、训练集和测试集切分。
 
+## 运行
+
+默认全量运行：
+
+```bash
+./04-deep-ranking/ncf/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+【非主线】想先快速试跑：
+
+```bash
+./04-deep-ranking/ncf/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+默认命令只保存 `checkpoints/best.pt`。报告会写入验证指标、测试集预测样例和 checkpoint 大小。
+
 ## 常见坑
 
 不要把所有没评分电影都当负样本。那样负样本数量太大，而且语义也不准。

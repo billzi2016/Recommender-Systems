@@ -25,7 +25,10 @@ from utils.reports import write_report
 def parse_args() -> argparse.Namespace:
     """解析实验参数。
 
-    矩阵分解默认使用合理采样；传 `--sample-ratings none` 可跑全量。
+    矩阵分解是第一个 PyTorch 训练实验，所以这里暴露的参数比 CF 多：
+    - early stopping 相关参数，控制训练什么时候停。
+    - DataLoader worker，控制 batch 准备速度。
+    - checkpoint 策略，控制是否写 `.pt` 文件。
     """
 
     parser = argparse.ArgumentParser(description="Run matrix factorization on MovieLens.")
@@ -42,13 +45,23 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    """运行矩阵分解实验，并生成 report.md / report.zh.md。"""
+    """运行矩阵分解实验，并生成 report.md / report.zh.md。
+
+    这个入口只做实验编排，不写模型细节：
+    1. 读取 MovieLens。
+    2. 按用户时间切分 train/valid/test。
+    3. 训练带偏置的矩阵分解。
+    4. 用电影 embedding 找相似电影。
+    5. 写真实指标、样例和 checkpoint 大小。
+    """
 
     args = parse_args()
     sample_ratings = parse_sample_ratings(args.sample_ratings)
     sample_text = sample_ratings_text(sample_ratings)
     print(f"[MF] 读取 MovieLens：{sample_text}。")
     data = load_movielens(sample_ratings=sample_ratings)
+    # 先留测试集，再从训练部分切验证集。
+    # 验证集用于 early stopping，测试集保留给报告里的最终指标。
     train_valid, test = train_test_by_user_time(data.ratings)
     train, valid = train_test_by_user_time(train_valid)
 

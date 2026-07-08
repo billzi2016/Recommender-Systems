@@ -1,5 +1,19 @@
 from __future__ import annotations
 
+"""Item-CF 的模型实现。
+
+Item-CF 的核心问题是：如果用户喜欢过某些电影，那么和这些电影相似的电影
+是否也值得推荐给他。
+
+这个文件只负责算法逻辑：
+1. 把高评分记录转成 movie-user 稀疏矩阵。
+2. 用 sklearn 计算电影之间的余弦近邻。
+3. 根据用户历史喜欢电影，把相似电影的分数累加成推荐列表。
+
+这里直接使用 scipy 稀疏矩阵和 sklearn NearestNeighbors，不自己手写矩阵存储
+或近邻搜索。这样初学者可以把注意力放在推荐逻辑，而不是底层数据结构。
+"""
+
 from dataclasses import dataclass
 
 import pandas as pd
@@ -40,6 +54,8 @@ def fit_item_cf(ratings: pd.DataFrame, positive_threshold: float = 4.0) -> ItemC
     计算电影之间的余弦近邻。
     """
 
+    # MovieLens 是显式评分数据。Item-CF 第一版把高评分近似看成“喜欢”。
+    # 低评分不是完全无用，但如果一开始混进来，初学者很难分清相似度含义。
     positives = ratings[ratings["rating"] >= positive_threshold].copy()
     # 重新编号是为了构建稀疏矩阵。原始 ID 不一定连续，不能直接当行列号。
     users = sorted(positives["userId"].unique())
@@ -48,10 +64,14 @@ def fit_item_cf(ratings: pd.DataFrame, positive_threshold: float = 4.0) -> ItemC
     movie_to_col = {int(movie_id): col for col, movie_id in enumerate(movies)}
     col_to_movie = {col: movie_id for movie_id, col in movie_to_col.items()}
 
+    # scipy csr_matrix 需要连续整数行列号。
+    # rows 是用户行号，cols 是电影列号，values=1 表示“这个用户喜欢过这部电影”。
     rows = positives["userId"].map(user_to_row).to_numpy()
     cols = positives["movieId"].map(movie_to_col).to_numpy()
     values = [1.0] * len(positives)
 
+    # 先构建 user-item，再转置成 item-user。
+    # 因为 Item-CF 要比较“电影和电影”，所以最终每一行应该是一部电影。
     user_item = csr_matrix((values, (rows, cols)), shape=(len(users), len(movies)))
     item_user = user_item.T.tocsr()
 
@@ -72,6 +92,8 @@ def recommend_for_user(model: ItemCFModel, ratings: pd.DataFrame, user_id: int, 
     5. 返回分数最高的 top_k 个候选。
     """
 
+    # 只从目标用户的高评分电影出发找相似电影。
+    # 这样推荐逻辑更接近“你喜欢 A，所以给你 A 的邻居”。
     liked = ratings[(ratings["userId"] == user_id) & (ratings["rating"] >= 4.0)]["movieId"].tolist()
     seen = set(ratings[ratings["userId"] == user_id]["movieId"].tolist())
     scores: dict[int, float] = {}
@@ -80,6 +102,7 @@ def recommend_for_user(model: ItemCFModel, ratings: pd.DataFrame, user_id: int, 
         if movie_id not in model.movie_to_col:
             continue
         col = model.movie_to_col[movie_id]
+        # +1 是因为最近邻里通常会包含电影自己，后面会过滤掉。
         distances, indices = model.neighbors.kneighbors(model.matrix[col], n_neighbors=min(neighbors_k + 1, model.matrix.shape[0]))
         for distance, index in zip(distances[0], indices[0], strict=False):
             candidate = model.col_to_movie[int(index)]

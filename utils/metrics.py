@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+"""推荐排序指标工具。
+
+这里放所有实验都会复用的轻量指标函数。
+指标函数只接收 Python 列表和集合，不依赖模型框架，
+这样传统 CF、PyTorch 召回、深度精排都能复用同一套计算方式。
+"""
+
 import math
 from collections.abc import Iterable
 
@@ -61,6 +68,8 @@ def mean_ranking_metrics(recommendations: dict[int, list[int]], relevant_by_user
     recalls: list[float] = []
     ndcgs: list[float] = []
     for user_id, recs in recommendations.items():
+        # 如果某个用户没有 relevant 集合，三个单用户指标都会自然变成 0。
+        # 调用方仍应尽量筛掉无意义用户，否则平均值会被这些用户拉低。
         relevant = relevant_by_user.get(user_id, set())
         precisions.append(precision_at_k(recs, relevant, k))
         recalls.append(recall_at_k(recs, relevant, k))
