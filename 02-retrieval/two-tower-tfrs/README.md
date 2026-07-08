@@ -1,10 +1,10 @@
-# Two tower TFRS
+# Two tower retrieval
 
 A two tower model learns one network for users and one network for items.
 
 The reason it exists is simple: retrieval must be fast. If a service has millions of items, scoring every user-item pair with a heavy model is too slow. A two tower model computes a user embedding and an item embedding separately. Retrieval becomes nearest neighbor search in embedding space.
 
-On MovieLens, the user tower can start with only `userId`. The movie tower can start with `movieId`, then add genres later. TensorFlow Recommenders is a common way to build this model because it has retrieval tasks and candidate indexing utilities.
+On MovieLens, the user tower can start with only `userId`. The movie tower can start with `movieId`, then add genres later. This repository uses PyTorch for the implementation so the same code path can use CUDA, MPS, or CPU.
 
 The first version should train on positive interactions. For example, treat high ratings as watched and liked, then train the model to place the user's next movie near the user embedding.
 
@@ -82,11 +82,27 @@ Reasonable retrieval results might include Blade Runner, Arrival, or The Dark Kn
 
 ## Run
 
-This directory is currently prepared as a learning section. The runnable PyTorch two tower experiment will follow the same interface as 01:
+From the repository root:
 
 ```bash
-./02-retrieval/two-tower-tfrs/run.sh --sample-ratings 2000000
+./02-retrieval/two-tower-tfrs/run.sh --sample-ratings none --save-checkpoints --checkpoint-every 0
 ```
+
+This saves only `checkpoints/best.pt`; the generated report records the `.pt` file size.
+
+For a faster trial run:
+
+```bash
+./02-retrieval/two-tower-tfrs/run.sh --sample-ratings 2000000 --save-checkpoints --checkpoint-every 0
+```
+
+To keep a few intermediate checkpoints too:
+
+```bash
+./02-retrieval/two-tower-tfrs/run.sh --sample-ratings none --save-checkpoints --checkpoint-every 20 --keep-checkpoints 3
+```
+
+The default DataLoader worker count is 8. Lower it with `--num-workers` if needed.
 
 ## Common mistakes
 

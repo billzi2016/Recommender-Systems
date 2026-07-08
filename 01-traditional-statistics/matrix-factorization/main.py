@@ -16,41 +16,10 @@ import pandas as pd
 
 from src.model import similar_movies, train_mf
 
+from utils.checkpoints import checkpoint_size_markdown
 from utils.cli import add_sample_ratings_arg, parse_sample_ratings, sample_ratings_text
 from utils.movielens import attach_titles, load_movielens, train_test_by_user_time
 from utils.reports import write_report
-
-
-def checkpoint_summary(checkpoint_dir: Path | None) -> tuple[str, str]:
-    """生成 checkpoint 文件大小说明。
-
-    初学者很容易忽略模型文件大小。这里把 `.pt` 文件大小写进报告，
-    让读者能直观看到 embedding 模型会占多少磁盘。
-    """
-
-    if checkpoint_dir is None:
-        return (
-            "Checkpoint saving was disabled, so no `.pt` files were written.",
-            "本次未开启 checkpoint 保存，因此没有写入 `.pt` 文件。",
-        )
-    if not checkpoint_dir.exists():
-        return (
-            "Checkpoint saving was enabled, but no checkpoint files were found.",
-            "本次开启了 checkpoint 保存，但没有找到 checkpoint 文件。",
-        )
-
-    rows: list[str] = ["| file | size MB |", "| --- | ---: |"]
-    rows_zh: list[str] = ["| 文件 | 大小 MB |", "| --- | ---: |"]
-    for path in sorted(checkpoint_dir.glob("*.pt")):
-        size_mb = path.stat().st_size / (1024 * 1024)
-        rows.append(f"| `{path.name}` | {size_mb:.2f} |")
-        rows_zh.append(f"| `{path.name}` | {size_mb:.2f} |")
-    if len(rows) == 2:
-        return (
-            "Checkpoint saving was enabled, but no checkpoint files were found.",
-            "本次开启了 checkpoint 保存，但没有找到 checkpoint 文件。",
-        )
-    return ("\n".join(rows), "\n".join(rows_zh))
 
 
 def parse_args() -> argparse.Namespace:
@@ -63,6 +32,7 @@ def parse_args() -> argparse.Namespace:
     add_sample_ratings_arg(parser)
     parser.add_argument("--max-epochs", type=int, default=1000, help="Maximum training epochs before early stopping.")
     parser.add_argument("--patience", type=int, default=5, help="Early stopping patience measured in epochs.")
+    parser.add_argument("--num-workers", type=int, default=8, help="PyTorch DataLoader workers for training.")
     checkpoint_group = parser.add_mutually_exclusive_group()
     checkpoint_group.add_argument("--save-checkpoints", dest="save_checkpoints", action="store_true", default=True, help="Save best.pt and a few sparse intermediate checkpoints.")
     checkpoint_group.add_argument("--no-save-checkpoints", dest="save_checkpoints", action="store_false", help="Do not write any .pt checkpoint files.")
@@ -94,6 +64,7 @@ def main() -> None:
         valid,
         max_epochs=args.max_epochs,
         patience=args.patience,
+        num_workers=args.num_workers,
         checkpoint_dir=checkpoint_dir,
         checkpoint_every=args.checkpoint_every,
         keep_checkpoints=args.keep_checkpoints,
@@ -104,7 +75,7 @@ def main() -> None:
     neighbors = similar_movies(result, example_movie_id, top_k=10)
     neighbor_df = attach_titles(pd.DataFrame(neighbors, columns=["movieId", "similarity"]), data.movies)
     example_title = data.movies.loc[data.movies["movieId"] == example_movie_id, "title"].iloc[0]
-    checkpoint_md, checkpoint_zh_md = checkpoint_summary(checkpoint_dir)
+    checkpoint_md, checkpoint_zh_md = checkpoint_size_markdown(checkpoint_dir)
     examples = (
         f"Example movie: `{example_title}`\n\n"
         + neighbor_df[["title", "genres", "similarity"]].to_markdown(index=False)
@@ -130,6 +101,7 @@ def main() -> None:
         [
             f"- 读取 MovieLens：{sample_text}。",
             f"- 使用 PyTorch 训练带用户偏置和电影偏置的矩阵分解模型，最多 {args.max_epochs} 轮，early stopping patience 为 {args.patience}。",
+            f"- DataLoader 使用 `{args.num_workers}` 个 worker。",
             f"- 本次使用设备：`{result.device_name}`。",
             "- 默认保存 `best.pt`，并按间隔最多保留少量中间 checkpoint；如需关闭可传 `--no-save-checkpoints`。",
         ],

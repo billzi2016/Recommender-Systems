@@ -19,3 +19,19 @@ flowchart LR
 xDeepFM 的重点不是“更深”，而是更有结构地建模交叉。普通 MLP 可能学到高阶关系，但不一定容易解释。CIN 会把不同阶的特征组合显式组织起来。
 
 在 MovieLens 上，先不要期待它一定赢。数据字段比较简单时，FM 或 DeepFM 可能已经够用。xDeepFM 更适合用来学习“显式高阶交叉”这个思路。
+
+## 运行
+
+默认全量运行：
+
+```bash
+./03-feature-crossing/xdeepfm/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+想先快速试跑：
+
+```bash
+./03-feature-crossing/xdeepfm/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+默认命令只保存 `checkpoints/best.pt`。报告会写入验证指标、测试集预测样例和 checkpoint 大小。

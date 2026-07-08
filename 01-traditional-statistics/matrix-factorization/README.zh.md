@@ -181,6 +181,8 @@ flowchart TB
 
 如果不想写任何 `.pt` 文件，可以加 `--no-save-checkpoints`。`checkpoints/` 已被 `.gitignore` 忽略。
 
+默认 DataLoader worker 数是 8。如果机器负载太高，可以用 `--num-workers` 调小。
+
 ## 常见坑
 
 不要把空格子当成 0 分。MovieLens 里的空格是未知，不是差评。

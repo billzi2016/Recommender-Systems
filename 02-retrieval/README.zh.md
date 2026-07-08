@@ -7,3 +7,17 @@
 你可以把召回看成推荐系统里的第一道筛选。它不负责做最终判断，而是尽量别漏掉可能有用的电影。后面的精排模型会更细致地看这些候选。
 
 第一版先从双塔模型开始。用户塔输出用户向量，电影塔输出电影向量，两个向量越接近，电影越可能被召回。
+
+## 运行方式
+
+从仓库根目录运行：
+
+```bash
+./02-retrieval/two-tower-tfrs/run.sh --sample-ratings none --save-checkpoints --checkpoint-every 0
+```
+
+想先快速试跑：
+
+```bash
+./02-retrieval/two-tower-tfrs/run.sh --sample-ratings 2000000 --save-checkpoints --checkpoint-every 0
+```

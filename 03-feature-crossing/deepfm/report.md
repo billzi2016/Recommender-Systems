@@ -1,0 +1,12 @@
+# DeepFM report
+
+This report has not been generated yet.
+
+Run the experiment from the repository root:
+
+```bash
+./03-feature-crossing/deepfm/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+After the run finishes, this file will be overwritten with real validation metrics, held-out prediction examples, and `.pt` checkpoint size information.
+

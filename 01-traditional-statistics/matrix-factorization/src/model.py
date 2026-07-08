@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from tqdm.auto import tqdm
 
 from utils.movielens import make_id_maps
-from utils.torch_utils import get_device, seed_everything
+from utils.torch_utils import dataloader_kwargs, get_device, seed_everything
 
 
 class MatrixFactorization(nn.Module):
@@ -79,6 +79,7 @@ def train_mf(
     max_epochs: int = 1000,
     patience: int = 5,
     batch_size: int = 4096,
+    num_workers: int = 8,
     checkpoint_dir: Path | None = None,
     checkpoint_every: int = 0,
     keep_checkpoints: int = 3,
@@ -106,7 +107,12 @@ def train_mf(
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-5)
     loss_fn = nn.MSELoss()
 
-    loader = DataLoader(_to_tensors(train, user_to_index, movie_to_index), batch_size=batch_size, shuffle=True)
+    loader = DataLoader(
+        _to_tensors(train, user_to_index, movie_to_index),
+        batch_size=batch_size,
+        shuffle=True,
+        **dataloader_kwargs(device, num_workers),
+    )
     best_rmse = float("inf")
     best_state = copy.deepcopy(model.state_dict())
     stale_epochs = 0
@@ -189,7 +195,7 @@ def evaluate_mf(
         return {"rmse": 0.0, "mae": 0.0}
 
     dataset = _to_tensors(ratings, user_to_index, movie_to_index)
-    loader = DataLoader(dataset, batch_size=8192)
+    loader = DataLoader(dataset, batch_size=8192, num_workers=0)
     preds: list[np.ndarray] = []
     actuals: list[np.ndarray] = []
     model.eval()

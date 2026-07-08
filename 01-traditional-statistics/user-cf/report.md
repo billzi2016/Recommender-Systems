@@ -1,12 +1,27 @@
 # User-CF report
 
-This report has not been generated yet.
+## What ran
 
-Run the experiment from the repository root:
+- Loaded a deterministic MovieLens sample.
+- Treated ratings >= 4.0 as positive feedback.
+- Found similar users with sklearn cosine nearest neighbors.
 
-```bash
-./01-traditional-statistics/user-cf/run.sh --sample-ratings none
-```
+## Metrics
 
-The script will overwrite this file with real metrics and recommendation examples.
+- `precision@10`: `0.1000`
+- `recall@10`: `0.0019`
 
+## Examples
+
+| title                                                  | genres                              |   score |
+|:-------------------------------------------------------|:------------------------------------|--------:|
+| Wallace & Gromit: The Best of Aardman Animation (1996) | Adventure|Animation|Comedy          | 4.13275 |
+| Enron: The Smartest Guys in the Room (2005)            | Documentary                         | 2.89688 |
+| Parasite (2019)                                        | Comedy|Drama                        | 2.62419 |
+| Muppets Take Manhattan, The (1984)                     | Children|Comedy|Musical             | 2.14223 |
+| People Will Talk (1951)                                | Comedy|Romance                      | 2.11905 |
+| Run Silent Run Deep (1958)                             | War                                 | 2.10309 |
+| The Irishman (2019)                                    | Crime|Drama                         | 2.09153 |
+| Murder on the Orient Express (1974)                    | Crime|Mystery|Thriller              | 1.86089 |
+| Knives Out (2019)                                      | Comedy|Crime|Drama|Mystery|Thriller | 1.84716 |
+| Christmas Carol, A (1938)                              | Children|Drama|Fantasy              | 1.80194 |

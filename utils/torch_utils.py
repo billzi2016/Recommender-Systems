@@ -34,3 +34,18 @@ def get_device() -> torch.device:
     if torch.backends.mps.is_available():
         return torch.device("mps")
     return torch.device("cpu")
+
+
+def dataloader_kwargs(device: torch.device, num_workers: int) -> dict[str, object]:
+    """返回 PyTorch DataLoader 的通用性能参数。
+
+    `persistent_workers` 只在多 worker 时开启，避免每个 epoch 反复创建进程。
+    `pin_memory` 只在 CUDA 上开启；它主要优化 CPU 到 NVIDIA GPU 的拷贝。
+    MPS 和 CPU 默认不开，避免增加无意义的内存压力。
+    """
+
+    return {
+        "num_workers": num_workers,
+        "persistent_workers": num_workers > 0,
+        "pin_memory": device.type == "cuda",
+    }

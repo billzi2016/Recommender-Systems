@@ -78,6 +78,22 @@ FM 会考虑任意两个特征之间的关系，比如：
 
 如果第二组比第一组好，说明 genres 有帮助。如果第三组没提升，也不奇怪。MovieLens 的时间戳是评分时间，不一定等于真实观看时间。
 
+## 运行
+
+默认全量运行：
+
+```bash
+./03-feature-crossing/fm/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+想先快速试跑：
+
+```bash
+./03-feature-crossing/fm/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+默认命令只保存 `checkpoints/best.pt`。报告会写入验证指标、测试集预测样例和 checkpoint 大小。
+
 ## 常见坑
 
 不要把 title 直接当成普通类别特征乱塞进去。电影标题几乎等价于 movieId，第一版意义不大。

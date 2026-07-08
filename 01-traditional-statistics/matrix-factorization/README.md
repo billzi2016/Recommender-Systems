@@ -144,6 +144,8 @@ The generated report records the `.pt` file size. To keep a few intermediate che
 
 Use `--no-save-checkpoints` if you do not want any `.pt` writes. `checkpoints/` is ignored by git.
 
+The default DataLoader worker count is 8. Lower it with `--num-workers` if needed.
+
 ## Common mistakes
 
 Do not treat missing cells as zero ratings. Missing means unknown.

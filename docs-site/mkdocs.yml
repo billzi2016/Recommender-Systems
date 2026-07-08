@@ -78,12 +78,20 @@ nav:
               - Report: algorithms/traditional-statistics/matrix-factorization/report.md
       - Retrieval:
           - Overview: algorithms/retrieval/index.md
-          - Two tower TFRS: algorithms/retrieval/two-tower-tfrs/index.md
+          - Two tower retrieval:
+              - Guide: algorithms/retrieval/two-tower-tfrs/index.md
+              - Report: algorithms/retrieval/two-tower-tfrs/report.md
       - Feature crossing:
           - Overview: algorithms/feature-crossing/index.md
-          - FM: algorithms/feature-crossing/fm/index.md
-          - DeepFM: algorithms/feature-crossing/deepfm/index.md
-          - xDeepFM: algorithms/feature-crossing/xdeepfm/index.md
+          - FM:
+              - Guide: algorithms/feature-crossing/fm/index.md
+              - Report: algorithms/feature-crossing/fm/report.md
+          - DeepFM:
+              - Guide: algorithms/feature-crossing/deepfm/index.md
+              - Report: algorithms/feature-crossing/deepfm/report.md
+          - xDeepFM:
+              - Guide: algorithms/feature-crossing/xdeepfm/index.md
+              - Report: algorithms/feature-crossing/xdeepfm/report.md
       - Deep ranking:
           - Overview: algorithms/deep-ranking/index.md
           - NCF: algorithms/deep-ranking/ncf/index.md

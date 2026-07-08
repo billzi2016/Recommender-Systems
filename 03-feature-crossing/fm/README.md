@@ -74,11 +74,19 @@ If genres help, the model is using side information. If time does not help, that
 
 ## Run
 
-Runnable FM code will follow:
+Default full-dataset run:
 
 ```bash
-./03-feature-crossing/fm/run.sh --sample-ratings 2000000
+./03-feature-crossing/fm/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
+
+For a faster trial run:
+
+```bash
+./03-feature-crossing/fm/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+The default command saves only `checkpoints/best.pt`. The report records validation metrics, held-out prediction examples, and checkpoint size.
 
 ## Common mistakes
 

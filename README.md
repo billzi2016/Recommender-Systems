@@ -23,30 +23,47 @@ Install the root dependencies first:
 pip install -r requirements.txt
 ```
 
-The completed `01-traditional-statistics` experiments can be run with:
+### Experiment 01: traditional statistics
 
 ```bash
 ./01-traditional-statistics/item-cf/run.sh --sample-ratings none
 ./01-traditional-statistics/user-cf/run.sh --sample-ratings none
-./01-traditional-statistics/matrix-factorization/run.sh --sample-ratings none --save-checkpoints --checkpoint-every 0
+./01-traditional-statistics/matrix-factorization/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
 
-`none` uses the full MovieLens 32M dataset. For a faster trial run, use a smaller sample:
+Non-main path: `none` uses the full MovieLens 32M dataset. For a faster trial run, use a smaller sample:
 
 ```bash
 ./01-traditional-statistics/item-cf/run.sh --sample-ratings 2000000
 ./01-traditional-statistics/item-cf/run.sh --sample-ratings 5000000
+./01-traditional-statistics/matrix-factorization/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
 
 The matrix factorization command above saves only `checkpoints/best.pt`. Its report includes the `.pt` file size.
 
-If you want a few intermediate checkpoints too, use:
+Non-main path: if you want a few intermediate checkpoints too, use:
 
 ```bash
-./01-traditional-statistics/matrix-factorization/run.sh --sample-ratings none --save-checkpoints --checkpoint-every 20 --keep-checkpoints 3
+./01-traditional-statistics/matrix-factorization/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 20 --keep-checkpoints 3
 ```
 
 Use `--no-save-checkpoints` if you do not want any `.pt` writes.
+
+PyTorch experiments default to `--num-workers 8` for DataLoader. Lower it if your machine feels overloaded.
+
+### Experiment 02: retrieval
+
+```bash
+./02-retrieval/two-tower-tfrs/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+### Experiment 03: feature crossing
+
+```bash
+./03-feature-crossing/fm/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./03-feature-crossing/deepfm/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./03-feature-crossing/xdeepfm/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
 
 Each experiment writes:
 
