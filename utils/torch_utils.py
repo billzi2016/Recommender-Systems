@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import gc
 import random
+from typing import Any
 
 import numpy as np
 import torch
@@ -49,3 +51,27 @@ def dataloader_kwargs(device: torch.device, num_workers: int) -> dict[str, objec
         "persistent_workers": num_workers > 0,
         "pin_memory": device.type == "cuda",
     }
+
+
+def cleanup_dataloaders(*loaders: Any) -> None:
+    """尽量主动释放 PyTorch DataLoader worker。
+
+    macOS 上使用 `num_workers > 0` 和 `persistent_workers=True` 时，
+    训练已经结束但 Python 进程不退出的情况并不少见。
+    这里保留 persistent worker 带来的速度收益，同时在训练收尾阶段主动清理：
+    1. 如果 DataLoader 内部有 persistent iterator，就调用 PyTorch 的 worker shutdown。
+    2. 把 DataLoader 持有的内部 iterator 置空，减少残留引用。
+    3. 最后调用 `gc.collect()`，让 Python 尽快回收 worker 相关对象。
+
+    `_iterator` 和 `_shutdown_workers` 是 PyTorch 的内部实现细节。
+    这里只在实验脚本收尾时使用，失败也不影响模型结果，所以用防御式写法兜底。
+    """
+
+    for loader in loaders:
+        iterator = getattr(loader, "_iterator", None)
+        shutdown = getattr(iterator, "_shutdown_workers", None)
+        if callable(shutdown):
+            shutdown()
+        if hasattr(loader, "_iterator"):
+            loader._iterator = None
+    gc.collect()

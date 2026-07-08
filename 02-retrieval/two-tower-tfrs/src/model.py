@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from tqdm.auto import tqdm
 
 from utils.movielens import make_id_maps
-from utils.torch_utils import dataloader_kwargs, get_device, seed_everything
+from utils.torch_utils import cleanup_dataloaders, dataloader_kwargs, get_device, seed_everything
 
 
 class TwoTower(nn.Module):
@@ -198,6 +198,10 @@ def train_two_tower(
             saved_intermediates.append(checkpoint_path)
             while len(saved_intermediates) > keep_checkpoints:
                 saved_intermediates.pop(0).unlink(missing_ok=True)
+
+    # 训练循环结束后主动关闭 DataLoader worker。
+    # 保留 persistent_workers 的速度收益，同时减少 macOS 退出卡住的概率。
+    cleanup_dataloaders(train_loader, valid_loader)
 
     model.load_state_dict(best_state)
     if checkpoint_dir is not None:

@@ -16,7 +16,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
-from utils.torch_utils import dataloader_kwargs, get_device, seed_everything
+from utils.torch_utils import cleanup_dataloaders, dataloader_kwargs, get_device, seed_everything
 
 
 @dataclass
@@ -157,6 +157,10 @@ def train_feature_crossing_model(
         if stale_epochs >= patience:
             print(f"[feature-crossing] early stopping at epoch {epoch}.")
             break
+
+    # 训练结束后主动关闭 DataLoader worker。
+    # 这主要是为 macOS 多进程 DataLoader 收尾不干净的问题兜底。
+    cleanup_dataloaders(train_loader, valid_loader)
 
     if best_state is not None:
         model.load_state_dict(best_state)

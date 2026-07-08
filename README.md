@@ -73,6 +73,13 @@ PyTorch experiments default to `--num-workers 8` for DataLoader. Lower it if you
 ./04-deep-ranking/dcn/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
 
+### Experiment 05: sequential recommendation
+
+```bash
+./05-sequential-recommendation/gru4rec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./05-sequential-recommendation/sasrec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
 Each experiment writes:
 
 - `report.md`: English report

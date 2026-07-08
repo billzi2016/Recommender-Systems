@@ -131,3 +131,19 @@ flowchart LR
 不要把测试集里的未来电影放进训练序列。时间切分要在用户序列内部做清楚。
 
 不要一开始把序列长度设得特别长。长序列更费显存，也更难调试。先用 50 或 100 这种长度跑通。
+
+## 运行
+
+默认全量运行：
+
+```bash
+./05-sequential-recommendation/sasrec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+【非主线】想先快速试跑：
+
+```bash
+./05-sequential-recommendation/sasrec/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+默认命令只保存 `checkpoints/best.pt`。报告会写入验证指标、测试指标、序列样例和 checkpoint 大小。

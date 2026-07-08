@@ -17,7 +17,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
-from utils.torch_utils import dataloader_kwargs, get_device, seed_everything
+from utils.torch_utils import cleanup_dataloaders, dataloader_kwargs, get_device, seed_everything
 
 
 @dataclass
@@ -192,6 +192,10 @@ def train_ranking_model(
         if stale_epochs >= patience:
             print(f"[ranking] early stopping at epoch {epoch}.")
             break
+
+    # 训练结束后主动关闭 DataLoader worker。
+    # 这样可以保留 persistent_workers 的训练速度，同时降低脚本结束时卡住的概率。
+    cleanup_dataloaders(train_loader, valid_loader)
 
     if best_state is not None:
         model.load_state_dict(best_state)

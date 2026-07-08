@@ -80,11 +80,19 @@ If the mask is wrong, metrics can look great for the wrong reason.
 
 ## Run
 
-Runnable PyTorch SASRec code will follow:
+Default full-dataset run:
 
 ```bash
-./05-sequential-recommendation/sasrec/run.sh --sample-ratings 2000000
+./05-sequential-recommendation/sasrec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
+
+Non-main path: for a faster trial run:
+
+```bash
+./05-sequential-recommendation/sasrec/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+The default command saves only `checkpoints/best.pt`. The report records validation metrics, test metrics, sequence examples, and checkpoint size.
 
 ## Common mistakes
 

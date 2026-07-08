@@ -25,3 +25,19 @@ GRU4Rec 的隐藏状态可以理解成“用户当前兴趣的压缩表示”。
 | The Matrix, Inception | Interstellar |
 
 常见坑是把用户历史打乱。GRU4Rec 依赖顺序，一旦打乱，它就退化成很别扭的普通协同过滤。
+
+## 运行
+
+默认全量运行：
+
+```bash
+./05-sequential-recommendation/gru4rec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+【非主线】想先快速试跑：
+
+```bash
+./05-sequential-recommendation/gru4rec/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+默认命令只保存 `checkpoints/best.pt`。报告会写入验证指标、测试指标、序列样例和 checkpoint 大小。

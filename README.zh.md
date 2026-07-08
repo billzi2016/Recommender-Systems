@@ -73,6 +73,13 @@ PyTorch 实验默认 `--num-workers 8`。如果机器负载太高，可以调小
 ./04-deep-ranking/dcn/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
 
+### 实验 05：序列推荐
+
+```bash
+./05-sequential-recommendation/gru4rec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./05-sequential-recommendation/sasrec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
 每个实验都会生成：
 
 - `report.md`：英文实验报告

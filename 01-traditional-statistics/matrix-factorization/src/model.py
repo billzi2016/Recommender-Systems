@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from tqdm.auto import tqdm
 
 from utils.movielens import make_id_maps
-from utils.torch_utils import dataloader_kwargs, get_device, seed_everything
+from utils.torch_utils import cleanup_dataloaders, dataloader_kwargs, get_device, seed_everything
 
 
 class MatrixFactorization(nn.Module):
@@ -189,6 +189,10 @@ def train_mf(
             while len(saved_intermediates) > keep_checkpoints:
                 old_path = saved_intermediates.pop(0)
                 old_path.unlink(missing_ok=True)
+
+    # 训练循环结束后主动关闭 DataLoader worker。
+    # macOS + persistent_workers 有时会导致脚本最后不退出，这里集中清理。
+    cleanup_dataloaders(loader)
 
     model.load_state_dict(best_state)
     if checkpoint_dir is not None:

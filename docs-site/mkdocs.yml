@@ -105,8 +105,12 @@ nav:
               - Report: algorithms/deep-ranking/dcn/report.md
       - Sequential recommendation:
           - Overview: algorithms/sequential-recommendation/index.md
-          - GRU4Rec: algorithms/sequential-recommendation/gru4rec/index.md
-          - SASRec: algorithms/sequential-recommendation/sasrec/index.md
+          - GRU4Rec:
+              - Guide: algorithms/sequential-recommendation/gru4rec/index.md
+              - Report: algorithms/sequential-recommendation/gru4rec/report.md
+          - SASRec:
+              - Guide: algorithms/sequential-recommendation/sasrec/index.md
+              - Report: algorithms/sequential-recommendation/sasrec/report.md
       - Graph recommendation:
           - Overview: algorithms/graph-recommendation/index.md
           - LightGCN: algorithms/graph-recommendation/lightgcn/index.md
