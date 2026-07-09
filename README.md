@@ -79,6 +79,12 @@ For PyTorch experiments, an existing `checkpoints/best.pt` is reused by default.
 
 ```bash
 ./05-sequential-recommendation/gru4rec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
+./05-sequential-recommendation/sasrec/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+Non-main path: full SASRec training is heavier because it uses full softmax over the movie vocabulary. Use the full MovieLens 32M run only when you intentionally want that:
+
+```bash
 ./05-sequential-recommendation/sasrec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
 

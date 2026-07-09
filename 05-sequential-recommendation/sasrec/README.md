@@ -80,16 +80,18 @@ If the mask is wrong, metrics can look great for the wrong reason.
 
 ## Run
 
-Default full-dataset run:
-
-```bash
-./05-sequential-recommendation/sasrec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
-```
-
-Non-main path: for a faster trial run:
+Main run:
 
 ```bash
 ./05-sequential-recommendation/sasrec/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+SASRec currently uses full softmax, so every batch scores the full movie vocabulary. This is straightforward and useful for understanding next-item prediction, but the full MovieLens 32M run is much heavier.
+
+Non-main path: use the full MovieLens 32M run only when you intentionally want it:
+
+```bash
+./05-sequential-recommendation/sasrec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
 
 The default command saves only `checkpoints/best.pt`. The report records validation metrics, test metrics, sequence examples, and checkpoint size.

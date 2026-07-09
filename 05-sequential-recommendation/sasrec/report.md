@@ -1,12 +1,35 @@
 # SASRec report
 
-This report has not been generated yet.
+## What ran
 
-Run the experiment from the repository root:
+- Loaded MovieLens: 2,000,000 条评分.
+- Kept high-rating movies as positive user sequences.
+- Used max sequence length `50` and max `20` training examples per user.
+- DataLoader workers: `8`.
+- Device used: `mps`.
 
-```bash
-./05-sequential-recommendation/sasrec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
-```
+## Metrics
 
-After the run finishes, this file will be overwritten with real validation metrics, test metrics, sequence examples, and `.pt` checkpoint size information.
+- `best_valid_loss`: `7.7595`
+- `best_valid_recall@10`: `0.0307`
+- `best_valid_ndcg@10`: `0.0143`
+- `test_loss`: `7.9499`
+- `test_recall@10`: `0.0260`
+- `test_ndcg@10`: `0.0121`
+- `epochs_ran`: `11.0000`
 
+## Examples
+
+| history                                                                                                                                                                                                                                             | true_next          | top_recommendations                                                                                                                                                                                                                                                                        |
+|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Emma (1996) -> Living in Oblivion (1995) -> Titanic (1997)                                                                                                                                                                                          | Raging Bull (1980) | Schindler's List (1993) | Pulp Fiction (1994) | Forrest Gump (1994) | Monty Python and the Holy Grail (1975) | Terminator 2: Judgment Day (1991) | Seven (a.k.a. Se7en) (1995) | Toy Story (1995) | Jurassic Park (1993) | Usual Suspects, The (1995) | Die Hard (1988)                    |
+| Star Wars: Episode IV - A New Hope (1977) -> Schindler's List (1993) -> While You Were Sleeping (1995) -> Ten Commandments, The (1956) -> Superman III (1983) -> Superman IV: The Quest for Peace (1987) -> Matrix Reloaded, The (2003)             | Shadowlands (1993) | X-Men (2000) | Fifth Element, The (1997) | Terminator 2: Judgment Day (1991) | Sixth Sense, The (1999) | Die Hard (1988) | Shrek (2001) | Kill Bill: Vol. 2 (2004) | Star Wars: Episode VI - Return of the Jedi (1983) | Seven (a.k.a. Se7en) (1995) | Gladiator (2000)                    |
+| Alien (1979) -> Blues Brothers, The (1980) -> The Butterfly Effect (2004)                                                                                                                                                                           | Serenity (2005)    | Die Hard (1988) | Fifth Element, The (1997) | Stand by Me (1986) | Monty Python and the Holy Grail (1975) | Star Wars: Episode VI - Return of the Jedi (1983) | Forrest Gump (1994) | Seven (a.k.a. Se7en) (1995) | Toy Story (1995) | Big Lebowski, The (1998) | Kill Bill: Vol. 1 (2003) |
+| Raiders of the Lost Ark (Indiana Jones and the Raiders of the Lost Ark) (1981) -> Beauty and the Beast (1991) -> Lion King, The (1994) -> Mulan (1998)                                                                                              | Birds, The (1963)  | Lion King, The (1994) | Fugitive, The (1993) | Forrest Gump (1994) | Braveheart (1995) | Jurassic Park (1993) | Toy Story (1995) | Mask, The (1994) | Shawshank Redemption, The (1994) | While You Were Sleeping (1995) | Pretty Woman (1990)                                              |
+| Icarus (2017) -> Jodorowsky's Dune (2013) -> Guard, The (2011) -> Bo Burnham: Inside (2021) -> Laputa: Castle in the Sky (Tenkû no shiro Rapyuta) (1986) -> Ponyo (Gake no ue no Ponyo) (2008) -> News of the World (2020) -> Licorice Pizza (2021) | RRR (2022)         | Get Out (2017) | Machete (2010) | Dune (2021) | A-Team, The (2010) | Karate Kid, The (1984) | Monsters vs. Aliens (2009) | Band of Brothers (2001) | Guardians of the Galaxy 2 (2017) | Darkest Hour (2017) | Green Book (2018)                                                            |
+
+## Checkpoint size
+
+| file | size MB |
+| --- | ---: |
+| `best.pt` | 10.98 |

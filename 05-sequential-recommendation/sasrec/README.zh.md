@@ -134,16 +134,18 @@ flowchart LR
 
 ## 运行
 
-默认全量运行：
-
-```bash
-./05-sequential-recommendation/sasrec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
-```
-
-【非主线】想先快速试跑：
+主线运行：
 
 ```bash
 ./05-sequential-recommendation/sasrec/run.sh --sample-ratings 2000000 --num-workers 8 --save-checkpoints --checkpoint-every 0
+```
+
+SASRec 当前使用 full softmax，每个 batch 都会对所有电影打分。这个写法最直观，也方便理解 next-item prediction，但全量 MovieLens 32M 会明显更重。
+
+【非主线】如果明确要跑完整 MovieLens 32M：
+
+```bash
+./05-sequential-recommendation/sasrec/run.sh --sample-ratings none --num-workers 8 --save-checkpoints --checkpoint-every 0
 ```
 
 默认命令只保存 `checkpoints/best.pt`。报告会写入验证指标、测试指标、序列样例和 checkpoint 大小。

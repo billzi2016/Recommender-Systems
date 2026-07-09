@@ -33,6 +33,7 @@ plugins:
           nav_translations:
             Home: 首页
             Getting started: 入门
+            Results: 结果汇总
             Datasets: 数据集
             MovieLens: MovieLens
             Algorithms: 算法
@@ -62,6 +63,7 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting started: getting-started.md
+  - Results: results.md
   - Datasets:
       - MovieLens: datasets/movie_lens/index.md
   - Algorithms:

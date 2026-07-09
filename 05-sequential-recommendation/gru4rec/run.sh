@@ -10,4 +10,3 @@ echo "[GRU4Rec] 默认 DataLoader workers: 8。"
 echo "[GRU4Rec] 默认保存 best.pt；如果完全不想写 .pt，可以传 --no-save-checkpoints。"
 
 PYTHONPATH="../..:.." python main.py "$@"
-
